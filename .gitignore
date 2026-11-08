@@ -1,0 +1,46 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg
+
+# --- Node ---
+node_modules/
+dist/
+.vite/
+
+# --- Environment / secrets ---
+.env
+.env.local
+.env.*.local
+*.pem
+
+# --- Databases / data ---
+*.sqlite3
+*.db
+pgdata/
+data/raw/
+data/staging/
+downloads/
+
+# --- Geospatial working files ---
+*.gpkg-wal
+*.gpkg-shm
+
+# --- IDE / OS ---
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+.DS_Store
+
+# --- Logs ---
+*.log
+logs/
