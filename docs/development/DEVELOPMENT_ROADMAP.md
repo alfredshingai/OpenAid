@@ -48,14 +48,21 @@ approved technical decisions.
 
 Tests: backend 15/15 · PoC regression 51/51 · frontend 3/3 · CI green.
 
-## Phase 2 — Data operations
+## Phase 2 — Data operations (in progress; governance landed 2026-11-08)
 
-- Ingestion pipelines beyond PoC scope (CSV/XLSX/Shapefile), schema registry.
-- Dataset versions, lineage (`source_records`, `data_lineage`,
-  `transformation_logs`).
-- Moderation & controlled publishing (roles, submissions, reviews, audit
-  logs).
-- Freshness / data-readiness explorer (separate coverage dimensions).
+| Deliverable | Status |
+| --- | --- |
+| Generic country onboarding (cbk bundle → profile-driven) | ✅ Kenya live: 336 units, 54.6M pop, 14,881 schools, 2,615 health facilities |
+| Governance: users, roles, token auth (scrypt + HMAC) | ✅ |
+| Moderation & controlled publishing: submissions, reviews | ✅ |
+| Audit log on material actions | ✅ |
+| Write endpoints protected server-side | ✅ |
+| Public API rate limiting (per-IP fixed window) | ✅ |
+| Ingestion beyond GeoJSON/GeoPackage (CSV/XLSX/Shapefile) | 🔜 next |
+| Dataset lineage (`source_records`, `data_lineage`, `transformation_logs`) | 🔜 |
+| Freshness / data-readiness explorer | 🔜 |
+
+Multi-country coverage: 2 countries onboarded (SWZ, KEN), 56 placeholders.
 
 ## Phase 3 — Spatial analysis & reporting
 
