@@ -219,5 +219,5 @@ def country_indicator_series(
                 for o in observations
             ],
         },
-        headers={"Cache-Control": "public, max-age=600, stale-while-revalidate=86400"},
+        headers={"Cache-Control": "public, max-age=0, must-revalidate, s-maxage=600, stale-while-revalidate=86400"},
     )

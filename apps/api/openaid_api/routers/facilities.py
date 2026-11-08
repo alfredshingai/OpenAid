@@ -116,7 +116,7 @@ def country_facilities(
             "total": int(total),
             "facilities": [_facility_out(f, include_geometry=True) for f in session.execute(stmt).scalars().all()],
         },
-        headers={"Cache-Control": "public, max-age=600, stale-while-revalidate=86400"},
+        headers={"Cache-Control": "public, max-age=0, must-revalidate, s-maxage=600, stale-while-revalidate=86400"},
     )
 
 
