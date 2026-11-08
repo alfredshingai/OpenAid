@@ -10,7 +10,9 @@ managed **PostgreSQL + PostGIS** (Neon free tier, wired via `neon deploy`).
 
 ```
  Browser ──► Vercel ──► /api/*  ──► api service ──► Neon PostGIS (pooled URL)
-                 └──────► /*     ──► web service (static SPA)
+                 └──────► /*     ──► web service (static SPA, internal
+                                      rewrite /(.*) -> /index.html so
+                                      deep links like /map resolve)
 ```
 
 ## One-time setup
