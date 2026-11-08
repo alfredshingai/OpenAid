@@ -21,51 +21,46 @@ export default function MapPage() {
   }, [])
 
   useEffect(() => {
-    const dbg = ((window as unknown as Record<string, unknown>).__mapPageDebug ??= {}) as Record<string, unknown>
-    dbg.effectRuns = (dbg.effectRuns as number ?? 0) + 1
-    if (!mapRef.current || mapObj.current) {
-      dbg.skipped = { mapRef: !!mapRef.current, mapObj: !!mapObj.current }
-      return
-    }
+    if (!mapRef.current || mapObj.current) return
     try {
-    mapObj.current = new maplibregl.Map({
-      container: mapRef.current,
-      style: {
-        version: 8,
-        sources: {},
-        layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#e8eef4' } }],
-      },
-      center: [18, 2],
-      zoom: 2.4,
-    })
-    mapObj.current.addControl(new maplibregl.NavigationControl())
-    ;(window as unknown as Record<string, unknown>).__africaMap = mapObj.current
-    // Some embedded viewers suspend requestAnimationFrame when the pane is
-    // not composited, which stalls MapLibre's render loop entirely. Nudge
-    // repaints on a timer until the map reaches idle so the first paint
-    // always happens; the timer stops as soon as the map reports idle.
-    const repaintTimer = window.setInterval(() => {
-      try {
-        if (mapObj.current?.loaded()) {
+      mapObj.current = new maplibregl.Map({
+        container: mapRef.current,
+        style: {
+          version: 8,
+          sources: {},
+          layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#e8eef4' } }],
+        },
+        center: [18, 2],
+        zoom: 2.4,
+      })
+      mapObj.current.addControl(new maplibregl.NavigationControl())
+      ;(window as unknown as Record<string, unknown>).__africaMap = mapObj.current
+
+      // Some embedded viewers suspend requestAnimationFrame when the pane is
+      // not composited, stalling MapLibre's render loop (blank canvas). Nudge
+      // repaints on a timer until the map reports loaded; harmless elsewhere.
+      const map = mapObj.current
+      const repaintTimer = window.setInterval(() => {
+        try {
+          if (map.loaded()) {
+            window.clearInterval(repaintTimer)
+            return
+          }
+          map.triggerRepaint()
+        } catch {
           window.clearInterval(repaintTimer)
-          return
         }
-        mapObj.current?.triggerRepaint()
-      } catch {
+      }, 400)
+
+      return () => {
         window.clearInterval(repaintTimer)
+        // Null the ref on teardown: React StrictMode mounts effects twice, and
+        // a stale removed-map reference made the re-run skip map creation.
+        mapObj.current?.remove()
+        mapObj.current = null
       }
-    }, 400)
-    // Null the ref on teardown: React StrictMode mounts effects twice, and a
-    // stale removed-map reference made the re-run skip map creation entirely
-    // (the "Africa map shows nothing" bug).
     } catch (err) {
-      dbg.constructorError = String(err)
       setError(`Map failed to start: ${String(err)}`)
-    }
-    return () => {
-      window.clearInterval(repaintTimer)
-      mapObj.current?.remove()
-      mapObj.current = null
     }
   }, [])
 
