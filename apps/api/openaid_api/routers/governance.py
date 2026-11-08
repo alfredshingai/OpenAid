@@ -22,6 +22,7 @@ from openaid_core.governance.models import (
     User,
     UserRole,
 )
+from openaid_core.governance.publish import ApplicationError, apply_submission
 from openaid_core.governance.service import record_audit
 from .auth import _user_from_token, require_role
 
@@ -159,6 +160,14 @@ def review_submission(
         raise HTTPException(status_code=404, detail="submission not found")
     if payload.action == SubmissionStatus.pending:
         raise HTTPException(status_code=422, detail="action must be a review decision")
+    applied: dict[str, Any] | None = None
+    if payload.action == SubmissionStatus.approved:
+        # Approval applies the change inside this transaction; a validation
+        # failure rolls everything back and the submission stays pending.
+        try:
+            applied = apply_submission(session, s)
+        except ApplicationError as exc:
+            raise HTTPException(status_code=422, detail=f"cannot apply: {exc}") from None
     s.status = payload.action
     s.review_notes = payload.notes
     s.reviewed_by_id = user.id
@@ -166,9 +175,17 @@ def review_submission(
     s.reviews.append(Review(reviewer_id=user.id, action=payload.action, notes=payload.notes))
     record_audit(
         session, "submission.reviewed", actor_id=user.id, entity_type="submission",
-        entity_id=str(s.id), detail={"action": payload.action.value, "type": s.submission_type.value},
+        entity_id=str(s.id),
+        detail={"action": payload.action.value, "type": s.submission_type.value, "applied": applied},
     )
-    return _submission_out(s)
+    if applied is not None:
+        record_audit(
+            session, "submission.applied", actor_id=user.id, entity_type="submission",
+            entity_id=str(s.id), detail=applied,
+        )
+    out = _submission_out(s)
+    out["applied"] = applied
+    return out
 
 
 @router.get("/audit-log")
