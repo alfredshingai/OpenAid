@@ -79,10 +79,38 @@ def create_app() -> FastAPI:
     if settings.rate_limit_per_minute > 0:
         app.add_middleware(RateLimitMiddleware, limit_per_minute=settings.rate_limit_per_minute)
 
+    def _masked_db_host(url: str) -> str:
+        """Sanitised connection target for diagnostics (no credentials)."""
+        try:
+            from sqlalchemy.engine import make_url
+
+            u = make_url(url)
+            return f"{u.drivername}://{u.host}:{u.port}/{u.database}"
+        except Exception:
+            return "unparseable DATABASE_URL"
+
     @app.get("/health", tags=["system"])
-    def health(session: Session = Depends(get_db)) -> dict[str, str]:
-        session.execute(text("SELECT 1"))
-        return {"status": "ok", "database": "ok"}
+    def health(session: Session = Depends(get_db)) -> JSONResponse:
+        """Liveness + database reachability, with a sanitised failure hint.
+
+        The hint names the connection target (never credentials) so a
+        misconfigured DATABASE_URL on a platform like Vercel is visible
+        immediately instead of surfacing as an opaque 500.
+        """
+        settings = get_settings()
+        try:
+            session.execute(text("SELECT 1"))
+            return JSONResponse({"status": "ok", "database": "ok"})
+        except Exception as exc:
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "status": "error",
+                    "database": "unreachable",
+                    "target": _masked_db_host(settings.database_url),
+                    "error": type(exc).__name__,
+                },
+            )
 
     app.include_router(auth.router)
     app.include_router(geography.router)

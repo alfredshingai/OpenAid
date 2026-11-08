@@ -24,7 +24,11 @@ ALLOWED_GEOMETRY_TYPES = {"Polygon", "MultiPolygon"}
 
 class Settings:
     def __init__(self) -> None:
-        raw_url = os.environ.get("DATABASE_URL", DEFAULT_DB_URL)
+        # Vercel env values sometimes arrive with stray quotes/whitespace
+        # when pasted from .env-style files; strip them before use.
+        raw_url = (os.environ.get("DATABASE_URL") or "").strip().strip('"').strip("'")
+        if not raw_url:
+            raw_url = DEFAULT_DB_URL
         # Neon-style URLs ("postgresql://...") are normalised to the psycopg
         # driver scheme SQLAlchemy needs; pooled/unpooled selection is done by
         # whichever URL the environment provides (see DEPLOYMENT.md).
