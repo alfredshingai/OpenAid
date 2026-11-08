@@ -104,7 +104,8 @@ export interface Dataset {
   versions: { version_number: string; changelog: string | null; source_version: string | null }[]
 }
 
-async function request<T>(path: string): Promise<T> {
+/** Generic GET used by pages that don't need full typing yet. */
+export async function request<T>(path: string): Promise<T> {
   const res = await fetch(path)
   if (!res.ok) {
     const detail = await res.text()

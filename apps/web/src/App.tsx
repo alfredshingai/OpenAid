@@ -5,6 +5,7 @@ import CountriesPage from './pages/CountriesPage'
 import CountryPage from './pages/CountryPage'
 import IndicatorsPage from './pages/IndicatorsPage'
 import DatasetsPage from './pages/DatasetsPage'
+import OrganisationsPage from './pages/OrganisationsPage'
 
 const navItem =
   'px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -25,6 +26,7 @@ export default function App() {
             <NavLink to="/map" className={navItem}>Map</NavLink>
             <NavLink to="/countries" className={navItem}>Countries</NavLink>
             <NavLink to="/indicators" className={navItem}>Indicators</NavLink>
+            <NavLink to="/organisations" className={navItem}>Organisations</NavLink>
             <NavLink to="/datasets" className={navItem}>Open Data</NavLink>
             <a
               href="/api/docs"
@@ -45,6 +47,7 @@ export default function App() {
           <Route path="/countries" element={<CountriesPage />} />
           <Route path="/countries/:iso3" element={<CountryPage />} />
           <Route path="/indicators" element={<IndicatorsPage />} />
+          <Route path="/organisations" element={<OrganisationsPage />} />
           <Route path="/datasets" element={<DatasetsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
