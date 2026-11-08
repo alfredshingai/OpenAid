@@ -45,6 +45,7 @@ Thumbs.db
 *.log
 logs/
 .neon
+.cbk_cache/
 
 .vercel
 .env*
