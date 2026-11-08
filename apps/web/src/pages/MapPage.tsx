@@ -284,7 +284,19 @@ export default function MapPage() {
       <div className="grid lg:grid-cols-[1fr_280px] gap-4">
         <div className="relative">
           <div ref={mapRef} className="h-[540px] rounded-lg border border-slate-200" />
-          {(error || !countries) && (
+          {renderHint && !error && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-50/95 rounded-lg p-6 text-center">
+              <p className="text-sm font-semibold text-slate-700">
+                The map canvas can't render inside this embedded browser pane.
+              </p>
+              <p className="text-xs text-slate-500 max-w-md">
+                Open <b>https://openaid-chi.vercel.app/map</b> in a regular browser
+                tab (Chrome, Edge, Firefox) — the map and country borders render
+                there. You can also try clicking inside the map area above.
+              </p>
+            </div>
+          )}
+          {(error || !countries) && !renderHint && (
             <div className="absolute inset-0 flex items-center justify-center bg-slate-50/80 rounded-lg">
               {error ? <ErrorBox message={error} /> : <Spinner />}
             </div>
