@@ -1,0 +1,57 @@
+# OpenAid full application stack (Phase 1 MVP).
+#
+#   docker compose up --build -d
+#   # API + docs:  http://localhost:8000/docs
+#   # Web app:    http://localhost:8080
+#
+# Optional — load real data (Eswatini baseline from crisis-baseline-kit v0.5.0):
+#   curl -sL -o /tmp/swz.zip https://github.com/alfredshingai/crisis-baseline-kit/releases/download/v0.5.0/swz-baseline-2026-11-01.zip
+#   python -c "import zipfile; zipfile.ZipFile('/tmp/swz.zip').extractall('/tmp/cbk')"
+#   docker compose run --rm api python -m openaid_core.seed.phase1 \
+#       --bundle-dir /tmp/cbk/swz-baseline-2026-11-01
+# (mount the bundle first: see the volumes example under the api service)
+#
+# The web container serves the built frontend and proxies /api to the API.
+
+services:
+  db:
+    image: postgis/postgis:18-3.7
+    environment:
+      POSTGRES_DB: openaid
+      POSTGRES_USER: openaid
+      POSTGRES_PASSWORD: openaid_dev_poc
+    volumes:
+      - openaid_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openaid -d openaid"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://openaid:openaid_dev_poc@db:5432/openaid
+    command: sh -c "alembic -c alembic.ini upgrade head && uvicorn openaid_api.main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    # Uncomment to seed from a local bundle:
+    # volumes:
+    #   - /tmp/cbk:/data/cbk:ro
+
+  web:
+    build:
+      context: apps/web
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  openaid_pgdata:

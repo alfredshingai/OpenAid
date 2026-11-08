@@ -16,7 +16,7 @@ transformed, what it can and cannot support, and where information is missing.
 
 ## Status
 
-**Phase 0 — Architecture & validated foundation (in progress).**
+**Phase 1 — Public MVP (in progress; Phase 0 PoC gate passed).**
 
 Per the project blueprint, the first engineering deliverable is an isolated
 **geography & spatial-data proof of concept** (dynamic multi-country
@@ -26,8 +26,12 @@ its acceptance criteria before any full-application development begins.
 | Artefact | Location | Status |
 | --- | --- | --- |
 | Product & architecture documents | [`docs/`](docs/) | ✅ |
-| Geography & spatial PoC | [`poc/geography-spatial/`](poc/geography-spatial/) | ✅ |
-| Full application (`apps/`, `backend/`) | — | ⛔ gated on PoC review |
+| Geography & spatial PoC (§16 gate evidence) | [`poc/geography-spatial/`](poc/geography-spatial/) | ✅ reviewed |
+| Backend domain library (`backend/openaid_core`) | geography · indicators · organisations · facilities · datasets | ✅ |
+| Public REST API (`apps/api`) | 26 documented endpoints | ✅ |
+| Web frontend (`apps/web`) | React + MapLibre public MVP | ✅ |
+| CI (GitHub Actions) | PostGIS tests + frontend build/tests | ✅ |
+| Real data onboarded | Eswatini (COD-AB boundaries, WorldPop population, HOT OSM facilities) | ✅ |
 
 ## Principles (non-negotiable)
 

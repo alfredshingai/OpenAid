@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend tests (PostGIS)
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgis/postgis:18-3.7
+        env:
+          POSTGRES_DB: openaid_ci
+          POSTGRES_USER: openaid
+          POSTGRES_PASSWORD: openaid_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U openaid"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql+psycopg://openaid:openaid_ci@127.0.0.1:5432/openaid_ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e backend -e apps/api
+          pip install pytest httpx pyarrow
+      - name: Apply migrations
+        run: alembic -c backend/alembic.ini upgrade head
+      - name: Download real-data bundle (crisis-baseline-kit v0.5.0 SWZ)
+        id: bundle
+        continue-on-error: true
+        run: |
+          mkdir -p /tmp/cbk_demo
+          curl -sL -o /tmp/cbk_demo/swz.zip \
+            https://github.com/alfredshingai/crisis-baseline-kit/releases/download/v0.5.0/swz-baseline-2026-11-01.zip
+          python -c "import zipfile; zipfile.ZipFile('/tmp/cbk_demo/swz.zip').extractall('/tmp/cbk_demo')"
+          echo "dir=/tmp/cbk_demo/swz-baseline-2026-11-01" >> "$GITHUB_OUTPUT"
+      - name: Seed real data
+        if: steps.bundle.outputs.dir != ''
+        run: python -m openaid_core.seed.phase1 --bundle-dir "${{ steps.bundle.outputs.dir }}"
+      - name: Run backend tests
+        run: |
+          if [ -n "${{ steps.bundle.outputs.dir }}" ]; then
+            export OPENAID_TEST_BUNDLE_DIR="${{ steps.bundle.outputs.dir }}"
+          fi
+          pytest tests/backend/ -v
+      - name: Run PoC test suite (regression guard)
+        working-directory: poc/geography-spatial
+        run: pytest tests/ -v
+
+  frontend:
+    name: Frontend (typecheck, build, tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Install dependencies
+        working-directory: apps/web
+        run: npm ci
+      - name: Typecheck
+        working-directory: apps/web
+        run: npx tsc -b
+      - name: Build
+        working-directory: apps/web
+        run: npm run build
+      - name: Component tests
+        working-directory: apps/web
+        run: npm test
