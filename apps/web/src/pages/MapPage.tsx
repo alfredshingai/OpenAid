@@ -13,6 +13,7 @@ export default function MapPage() {
   const mapObj = useRef<maplibregl.Map | null>(null)
   const [countries, setCountries] = useState<Country[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [renderHint, setRenderHint] = useState(false)
   const [selected, setSelected] = useState<Country | null>(null)
   const [level, setLevel] = useState(1)
 
@@ -40,6 +41,12 @@ export default function MapPage() {
       // not composited, stalling MapLibre's render loop (blank canvas). Nudge
       // repaints on a timer until the map reports loaded; harmless elsewhere.
       const map = mapObj.current
+      // If the style still hasn't loaded a few seconds after init, the
+      // viewer is suspending requestAnimationFrame (embedded panes do this
+      // when not composited). Tell the visitor instead of showing a blank box.
+      window.setTimeout(() => {
+        if (!map.loaded()) setRenderHint(true)
+      }, 6000)
       const repaintTimer = window.setInterval(() => {
         try {
           if (map.loaded()) {
