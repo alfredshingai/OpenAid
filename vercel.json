@@ -1,29 +1,22 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "builds": [
-    {
-      "src": "apps/web/package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
+  "services": {
+    "web": {
+      "root": "apps/web",
+      "framework": "vite"
     },
-    {
-      "src": "api/index.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxDuration": 30,
-        "memory": 1024
-      }
+    "api": {
+      "root": "api",
+      "framework": "fastapi",
+      "buildCommand": "pip install -r requirements.txt && cp -r ../backend/openaid_core . && cp -r ../apps/api/openaid_api ."
     }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/index.py" },
-    { "src": "/health", "dest": "/api/index.py" },
-    { "src": "/docs", "dest": "/api/index.py" },
-    { "src": "/docs/(.*)", "dest": "/api/index.py" },
-    { "src": "/openapi.json", "dest": "/api/index.py" },
-    { "src": "/redoc", "dest": "/api/index.py" },
-    { "src": "/assets/(.*)", "dest": "/assets/$1" },
-    { "src": "/(.*\\.(?:js|css|svg|png|ico|woff2?))", "dest": "/$1" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": { "service": "api" } },
+    { "source": "/health", "destination": { "service": "api" } },
+    { "source": "/docs", "destination": { "service": "api" } },
+    { "source": "/openapi.json", "destination": { "service": "api" } },
+    { "source": "/redoc", "destination": { "service": "api" } },
+    { "source": "/(.*)", "destination": { "service": "web" } }
   ]
 }

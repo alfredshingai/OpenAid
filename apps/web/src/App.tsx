@@ -29,7 +29,7 @@ export default function App() {
             <NavLink to="/organisations" className={navItem}>Organisations</NavLink>
             <NavLink to="/datasets" className={navItem}>Open Data</NavLink>
             <a
-              href="/api/docs"
+              href="/docs"
               className={navItem}
               target="_blank"
               rel="noreferrer"

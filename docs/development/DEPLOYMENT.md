@@ -1,13 +1,16 @@
 # Deploying OpenAid (Vercel + managed PostGIS)
 
-The platform deploys as **one Vercel project**: the React frontend is built
-statically and the FastAPI API runs as a Python serverless function behind
-the same domain (`/api/*` is routed to the function — no CORS needed).
-The database is a managed **PostgreSQL + PostGIS** (Neon or Supabase free
-tiers both support PostGIS).
+The platform deploys as **one Vercel project with two services**
+(`vercel.json` `services` mode): the `web` service (Vite SPA) is public on
+the catch-all route, the `api` service (FastAPI serverless function) is
+public on `/api/*`, `/health`, `/docs`, `/openapi.json` and `/redoc`. The
+browser calls the API through same-origin rewrites — no CORS, and **no
+service bindings** (no service-to-service calls exist). The database is a
+managed **PostgreSQL + PostGIS** (Neon free tier, wired via `neon deploy`).
 
 ```
- Browser ──► Vercel (static SPA) ──► /api/* ──► FastAPI function ──► Neon PostGIS
+ Browser ──► Vercel ──► /api/*  ──► api service ──► Neon PostGIS (pooled URL)
+                 └──────► /*     ──► web service (static SPA)
 ```
 
 ## One-time setup
@@ -59,9 +62,10 @@ Manual alternative:
 ### 2. Import the repo into Vercel
 
 1. Push `main` to GitHub (already done).
-2. https://vercel.com/new → import `alfredshingai/OpenAid` → framework
-   detection is overridden by `vercel.json` (static build + Python
-   function) — no build settings needed.
+2. https://vercel.com/new → import `alfredshingai/OpenAid` → Vercel
+   detects the services from `vercel.json` (`web` + `api`) — no build
+   settings needed. `backend/` is a library compiled into the `api`
+   service by its buildCommand; the PoC is intentionally not deployed.
 3. Environment variables (Project → Settings → Environment Variables):
 
    | Name | Value | Notes |
