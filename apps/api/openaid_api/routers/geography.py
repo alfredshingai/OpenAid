@@ -118,6 +118,8 @@ def _country_out(session: Session, country: Country) -> dict[str, Any]:
         "official_name": country.official_name,
         "capital": country.capital,
         "region": country.region,
+        "rep_lon": float(country.rep_lon) if country.rep_lon is not None else None,
+        "rep_lat": float(country.rep_lat) if country.rep_lat is not None else None,
         "status": country.status.value if hasattr(country.status, "value") else str(country.status),
         "levels": levels,
         "total_units": sum(counts.values()),

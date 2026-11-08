@@ -136,12 +136,15 @@ INDICATOR_DEFS = [
 def seed_countries(session) -> dict[str, Country]:
     """All African countries as placeholder rows; returns by ISO3."""
     by_iso3: dict[str, Country] = {}
-    for iso2, iso3, name, region in AFRICAN_COUNTRIES:
+    for iso2, iso3, name, region, lon, lat in AFRICAN_COUNTRIES:
         country = session.execute(select(Country).where(Country.iso3 == iso3)).scalar_one_or_none()
         if country is None:
-            country = Country(iso2=iso2, iso3=iso3, name=name, region=region, status=CountryStatus.placeholder)
+            country = Country(iso2=iso2, iso3=iso3, name=name, region=region,
+                              rep_lon=lon, rep_lat=lat, status=CountryStatus.placeholder)
             session.add(country)
             session.flush()
+        elif country.rep_lon is None:
+            country.rep_lon, country.rep_lat = lon, lat
         by_iso3[iso3] = country
     return by_iso3
 

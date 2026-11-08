@@ -16,6 +16,7 @@ from sqlalchemy import (
     CheckConstraint,
     Date,
     DateTime,
+    Numeric,
     Enum as SAEnum,
     ForeignKey,
     Index,
@@ -66,6 +67,10 @@ class Country(Base):
     official_name: Mapped[str | None] = mapped_column(String(300))
     capital: Mapped[str | None] = mapped_column(String(200))
     region: Mapped[str | None] = mapped_column(String(100))
+    # Approximate representative point for Africa-wide map markers only
+    # (never for analysis — boundaries are the authoritative geometry).
+    rep_lon: Mapped[float | None] = mapped_column(Numeric(8, 4))
+    rep_lat: Mapped[float | None] = mapped_column(Numeric(8, 4))
     status: Mapped[CountryStatus] = mapped_column(
         SAEnum(CountryStatus, name="country_status", native_enum=True),
         nullable=False,
