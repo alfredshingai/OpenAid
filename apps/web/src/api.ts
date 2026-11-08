@@ -104,9 +104,13 @@ export interface Dataset {
   versions: { version_number: string; changelog: string | null; source_version: string | null }[]
 }
 
+/** API base for split deployments (e.g. VITE_API_BASE=https://api.example.com).
+ * Defaults to same-origin so a single Vercel deployment needs no config. */
+export const API_BASE: string = import.meta.env.VITE_API_BASE ?? ''
+
 /** Generic GET used by pages that don't need full typing yet. */
 export async function request<T>(path: string): Promise<T> {
-  const res = await fetch(path)
+  const res = await fetch(`${API_BASE}${path}`)
   if (!res.ok) {
     const detail = await res.text()
     throw new Error(`API ${res.status}: ${detail}`)

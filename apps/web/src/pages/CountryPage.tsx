@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import * as echarts from 'echarts'
 import * as maplibregl from 'maplibre-gl'
 import type { FeatureCollection, Polygon, MultiPolygon } from 'geojson'
-import { api, type Country, type Facility, type Observation, type Unit } from '../api'
+import { api, API_BASE, type Country, type Facility, type Observation, type Unit } from '../api'
 import { ErrorBox, ObservationCard, Spinner, StatusChip } from '../components'
 import { whenMapReady } from '../mapReady'
 
@@ -75,7 +75,7 @@ function ActiveCountry({ country }: { country: Country }) {
       .catch(() => setFacilities([]))
     // Full series for the chart: every unit-level observation travels with
     // its own provenance, which the chart caption reproduces.
-    fetch(`/api/v1/countries/${country.iso3}/indicators/total_population`)
+    fetch(`${API_BASE}/api/v1/countries/${country.iso3}/indicators/total_population`)
       .then((r) => r.json())
       .then((d) => setPopulationSeries(d.observations ?? []))
       .catch(() => setPopulationSeries([]))

@@ -31,7 +31,9 @@ its acceptance criteria before any full-application development begins.
 | Public REST API (`apps/api`) | 26 documented endpoints | ✅ |
 | Web frontend (`apps/web`) | React + MapLibre public MVP | ✅ |
 | CI (GitHub Actions) | PostGIS tests + frontend build/tests | ✅ |
-| Real data onboarded | Eswatini (COD-AB boundaries, WorldPop population, HOT OSM facilities) | ✅ |
+| Real data onboarded | Eswatini + Kenya (COD-AB boundaries, WorldPop population, OSM facilities) | ✅ |
+| Governance | auth/roles, submissions+reviews, audit log, rate limiting | ✅ |
+| Deployment | Vercel (static SPA + API function) + managed PostGIS — see `docs/development/DEPLOYMENT.md` | ready |
 
 ## Principles (non-negotiable)
 
