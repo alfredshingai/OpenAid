@@ -324,12 +324,15 @@ def get_boundaries(
     if level_number is not None:
         level_filter = "AND al.level_number = :level_number"
         params["level_number"] = level_number
+    # Coordinates rounded to 5 decimal places (~1 m): display precision,
+    # roughly 40% smaller payloads. The authoritative geometry stays exact
+    # in PostGIS — only the map payload is rounded.
     rows = session.execute(
         text(
             f"""
             SELECT u.id, u.official_code, u.name, u.parent_unit_id,
                    al.level_number, al.level_name, u.reference_date,
-                   ST_AsGeoJSON(u.geometry) AS geometry
+                   ST_AsGeoJSON(u.geometry, 5) AS geometry
             FROM administrative_units u
             JOIN administrative_levels al ON al.id = u.administrative_level_id
             WHERE u.country_id = :country_id {level_filter}

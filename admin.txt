@@ -1,0 +1,4 @@
+URL:      https://openaid-chi.vercel.app/api/v1/auth/login
+Username: alfredshingai
+Password: Pf2oSUHz9issLpSpPQD8uQ
+Role:     admin (bootstrap — first account on the platform)

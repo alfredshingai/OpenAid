@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import JSONResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -109,11 +110,14 @@ def country_facilities(
         count_stmt = count_stmt.where(Facility.unit_id == unit.id)
 
     total = session.execute(count_stmt).scalar_one()
-    return {
-        "country_iso3": country.iso3,
-        "total": int(total),
-        "facilities": [_facility_out(f, include_geometry=True) for f in session.execute(stmt).scalars().all()],
-    }
+    return JSONResponse(
+        {
+            "country_iso3": country.iso3,
+            "total": int(total),
+            "facilities": [_facility_out(f, include_geometry=True) for f in session.execute(stmt).scalars().all()],
+        },
+        headers={"Cache-Control": "public, max-age=600, stale-while-revalidate=86400"},
+    )
 
 
 @router.get("/spatial/facilities")

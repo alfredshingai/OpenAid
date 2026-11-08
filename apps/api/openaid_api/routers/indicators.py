@@ -12,6 +12,7 @@ from datetime import date
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import JSONResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -206,14 +207,17 @@ def country_indicator_series(
         stmt = stmt.where(IndicatorObservation.unit_id == unit.id)
 
     observations = session.execute(stmt).scalars().all()
-    return {
-        "country_iso3": country.iso3,
-        "indicator": definition.code,
-        "unit": definition.unit,
-        "aggregation_method": definition.aggregation_method.value
-        if hasattr(definition.aggregation_method, "value") else str(definition.aggregation_method),
-        "observations": [
-            _obs_out(session, o, include_unit=True)
-            for o in observations
-        ],
-    }
+    return JSONResponse(
+        {
+            "country_iso3": country.iso3,
+            "indicator": definition.code,
+            "unit": definition.unit,
+            "aggregation_method": definition.aggregation_method.value
+            if hasattr(definition.aggregation_method, "value") else str(definition.aggregation_method),
+            "observations": [
+                _obs_out(session, o, include_unit=True)
+                for o in observations
+            ],
+        },
+        headers={"Cache-Control": "public, max-age=600, stale-while-revalidate=86400"},
+    )
