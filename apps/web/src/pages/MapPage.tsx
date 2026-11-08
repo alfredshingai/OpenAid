@@ -39,6 +39,22 @@ export default function MapPage() {
       zoom: 2.4,
     })
     mapObj.current.addControl(new maplibregl.NavigationControl())
+    ;(window as unknown as Record<string, unknown>).__africaMap = mapObj.current
+    // Some embedded viewers suspend requestAnimationFrame when the pane is
+    // not composited, which stalls MapLibre's render loop entirely. Nudge
+    // repaints on a timer until the map reaches idle so the first paint
+    // always happens; the timer stops as soon as the map reports idle.
+    const repaintTimer = window.setInterval(() => {
+      try {
+        if (mapObj.current?.loaded()) {
+          window.clearInterval(repaintTimer)
+          return
+        }
+        mapObj.current?.triggerRepaint()
+      } catch {
+        window.clearInterval(repaintTimer)
+      }
+    }, 400)
     // Null the ref on teardown: React StrictMode mounts effects twice, and a
     // stale removed-map reference made the re-run skip map creation entirely
     // (the "Africa map shows nothing" bug).
@@ -47,6 +63,7 @@ export default function MapPage() {
       setError(`Map failed to start: ${String(err)}`)
     }
     return () => {
+      window.clearInterval(repaintTimer)
       mapObj.current?.remove()
       mapObj.current = null
     }
