@@ -53,17 +53,23 @@ from ..indicators.models import (
 
 @dataclass
 class CountryProfile:
-    """Everything the onboarding workflow needs to know about a country."""
+    """Everything the onboarding workflow needs to know about a country.
 
-    iso2: str
+    Identity fields may be None for generic onboarding (batch): the existing
+    country row (name/region from the African registry) is kept and only the
+    hierarchy + data are onboarded. Local terminology stays unclaimed until
+    a human confirms it.
+    """
+
+    iso2: str | None
     iso3: str
-    name: str
-    official_name: str
-    capital: str
-    region: str
-    languages: list[str]
-    currency: str
-    timezone: str
+    name: str | None
+    official_name: str | None
+    capital: str | None
+    region: str | None
+    languages: list[str] | None
+    currency: str | None
+    timezone: str | None
     # level_number -> (local level name, description)
     levels: dict[int, tuple[str, str]]
     facility_type_code: str = "education_school"
@@ -654,7 +660,11 @@ def onboard(bundle_dir: Path, iso3: str) -> None:
     profile = PROFILES.get(iso3.upper())
     if profile is None:
         raise SystemExit(f"no profile for {iso3}; add one to openaid_core.seed.cbk.PROFILES")
-    print(f"Onboarding {profile.name} ({profile.iso3}) from {bundle_dir}")
+    _onboard_with_profile(bundle_dir, profile)
+
+
+def _onboard_with_profile(bundle_dir: Path, profile: CountryProfile) -> None:
+    print(f"Onboarding {profile.name or profile.iso3} ({profile.iso3}) from {bundle_dir}")
     with session_scope() as session:
         country = register_country(session, profile)
         print("  country registered/activated")
