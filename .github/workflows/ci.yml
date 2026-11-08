@@ -7,6 +7,10 @@ on:
     branches: [main]
 
 jobs:
+permissions:
+  contents: write
+
+jobs:
   backend:
     name: Backend tests (PostGIS)
     runs-on: ubuntu-latest
@@ -58,12 +62,18 @@ jobs:
           fi
           set -o pipefail
           pytest tests/backend/ -v 2>&1 | tee pytest_output.txt
-      - name: Upload backend test output
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: pytest-output
-          path: pytest_output.txt
+      - name: Publish test logs (ci-logs branch, readable without auth)
+        if: failure()
+        run: |
+          git config user.name "openaid-ci-logs"
+          git config user.email "ci@openaid.local"
+          git checkout --orphan ci-logs
+          git rm -rf --cached . >/dev/null 2>&1 || true
+          git add -f pytest_output.txt poc/geography-spatial/poc_pytest_output.txt 2>/dev/null || true
+          git commit -m "ci logs for ${GITHUB_SHA}"
+          git push -f origin ci-logs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run PoC test suite (regression guard)
         working-directory: poc/geography-spatial
         run: |
