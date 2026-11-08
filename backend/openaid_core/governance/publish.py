@@ -231,9 +231,13 @@ _APPLIERS = {
 
 def apply_submission(session: Session, submission: Submission) -> dict:
     """Apply an approved submission; raises ApplicationError on any problem."""
+    # 'other' submissions are advisory: approval records the decision with
+    # nothing to auto-apply. Corrections and new records apply concretely.
+    if submission.submission_type == SubmissionType.other:
+        return None
     if submission.submission_type not in _APPLIERS:
         raise ApplicationError(
             f"submission type '{submission.submission_type}' is recorded but has no "
-            "application step yet (only corrections and new records apply automatically)"
+            "application step yet"
         )
     return _APPLIERS[submission.submission_type](session, submission)

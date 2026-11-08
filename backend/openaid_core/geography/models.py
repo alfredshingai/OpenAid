@@ -49,6 +49,8 @@ class VerificationStatus(str, enum.Enum):
 class ImportFormat(str, enum.Enum):
     geojson = "geojson"
     gpkg = "gpkg"
+    csv = "csv"
+    xlsx = "xlsx"
 
 
 class ImportStatus(str, enum.Enum):

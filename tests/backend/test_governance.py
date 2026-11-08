@@ -95,7 +95,7 @@ def test_submission_review_lifecycle(client):
         "/api/v1/submissions",
         headers=auth_headers(contrib_token),
         json={
-            "submission_type": "facility_correction",
+            "submission_type": "other",
             "payload": {"facility": "Mbabane Clinic", "field": "operational_status", "value": "reported_operational"},
             "country_iso3": "SWZ",
         },
@@ -106,7 +106,7 @@ def test_submission_review_lifecycle(client):
             "/api/v1/submissions",
             headers=auth_headers(contrib_token),
             json={
-                "submission_type": "facility_correction",
+                "submission_type": "other",
                 "payload": {"facility": "Mbabane Clinic", "field": "operational_status", "value": "reported_operational"},
             },
         )

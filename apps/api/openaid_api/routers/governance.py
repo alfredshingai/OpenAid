@@ -6,11 +6,13 @@ import uuid
 from datetime import datetime, timezone
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, UploadFile
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from openaid_core.config import get_settings
 from openaid_core.db import get_db
 from openaid_core.geography.models import Country
 from openaid_core.governance.models import (
@@ -24,6 +26,10 @@ from openaid_core.governance.models import (
 )
 from openaid_core.governance.publish import ApplicationError, apply_submission
 from openaid_core.governance.service import record_audit
+from openaid_core.indicators.ingestion import TabularImportMeta, ingest_indicator_file
+from openaid_core.indicators.models import ValueType
+from openaid_core.datasets.models import DataSource
+from openaid_core.geography.models import ImportFormat
 from .auth import _user_from_token, require_role
 
 router = APIRouter(prefix="/api/v1", tags=["governance"])
@@ -186,6 +192,82 @@ def review_submission(
     out = _submission_out(s)
     out["applied"] = applied
     return out
+
+
+@app if False else router.post("/imports/indicators", tags=["ingestion"])
+async def import_indicators(
+    file: UploadFile = File(...),
+    country_iso3: str = Form(...),
+    source_name: str | None = Form(default=None),
+    source_licence: str | None = Form(default=None),
+    source_publisher: str | None = Form(default=None),
+    source_url: str | None = Form(default=None),
+    dataset_version: str | None = Form(default=None),
+    value_type: ValueType = Form(default=ValueType.observed),
+    user: User = Depends(require_role(UserRole.reviewer, UserRole.admin)),
+    session: Session = Depends(get_db),
+) -> JSONResponse:
+    """Ingest indicator observations from CSV / TSV / XLSX.
+
+    Contract columns: indicator_code, unit_code (empty = country-level),
+    period_start, period_end, value, missing_type, sample_size. Rows failing
+    validation are quarantined with reasons; valid rows still import.
+    """
+    from fastapi.responses import JSONResponse as _JSONResponse
+    import tempfile
+    from pathlib import Path as _Path
+
+    country = session.execute(
+        select(Country).where(Country.iso3 == country_iso3.upper())
+    ).scalar_one_or_none()
+    if country is None:
+        raise HTTPException(status_code=404, detail=f"country {country_iso3.upper()} not found")
+
+    data = await file.read()
+    settings = get_settings()
+    if len(data) > settings.max_upload_bytes:
+        raise HTTPException(status_code=413, detail="file exceeds the upload limit")
+
+    fmt = ImportFormat.xlsx if (file.filename or "").lower().endswith((".xlsx", ".xls")) else ImportFormat.csv
+
+    source = None
+    if source_name:
+        source = session.execute(
+            select(DataSource).where(DataSource.name == source_name)
+        ).scalar_one_or_none()
+        if source is None:
+            source = DataSource(
+                name=source_name, licence=source_licence, publisher=source_publisher,
+                url=source_url, is_synthetic=False,
+                metadata_={"created_via": "indicator_ingestion"},
+            )
+            session.add(source)
+            session.flush()
+
+    meta = TabularImportMeta(
+        country_id=country.id,
+        country_iso3=country.iso3,
+        source=source,
+        dataset_version=dataset_version,
+        default_value_type=value_type,
+        filename=file.filename,
+        format=fmt,
+    )
+    batch, report = ingest_indicator_file(session, meta, data)
+    record_audit(
+        session, "import.indicators", actor_id=user.id, entity_type="import_batch",
+        entity_id=str(batch.id),
+        detail={"country": country.iso3, "status": batch.status.value,
+                "imported": report.imported, "quarantined": report.quarantined,
+                "skipped_duplicates": report.skipped_duplicates},
+    )
+    status_code = 200 if batch.status.value != "failed" else 422
+    return _JSONResponse(status_code=status_code, content={
+        "batch_id": str(batch.id),
+        "country_iso3": country.iso3,
+        "status": batch.status.value,
+        "report": report.to_dict(),
+    })
 
 
 @router.get("/audit-log")
