@@ -315,9 +315,17 @@ def browse_units(
 def get_boundaries(
     iso3: str,
     level_number: int | None = None,
+    simplify: float = Query(default=0.0015, ge=0, le=0.05),
     limit: int = Query(default=2000, le=10000),
     session: Session = Depends(get_db),
-) -> dict[str, Any]:
+) -> JSONResponse:
+    """GeoJSON FeatureCollection of a country's units at a given level.
+
+    ``simplify`` (degrees, default 0.0015 ≈ 150 m) is a DISPLAY-only
+    simplification via ST_SimplifyPreserveTopology; ``?simplify=0`` returns
+    full-resolution geometry. The authoritative geometry in PostGIS is
+    never altered.
+    """
     country = _get_country(session, iso3)
     params: dict[str, Any] = {"country_id": str(country.id), "limit": limit}
     level_filter = ""
@@ -327,12 +335,18 @@ def get_boundaries(
     # Coordinates rounded to 5 decimal places (~1 m): display precision,
     # roughly 40% smaller payloads. The authoritative geometry stays exact
     # in PostGIS — only the map payload is rounded.
+    geometry_expr = "ST_AsGeoJSON(u.geometry, 5)"
+    if simplify > 0:
+        params["simplify"] = simplify
+        # ST_Multi keeps the response type stable (simplification of a
+        # single-part MultiPolygon would otherwise surface as Polygon).
+        geometry_expr = "ST_AsGeoJSON(ST_Multi(ST_SimplifyPreserveTopology(u.geometry, :simplify)), 5)"
     rows = session.execute(
         text(
             f"""
             SELECT u.id, u.official_code, u.name, u.parent_unit_id,
                    al.level_number, al.level_name, u.reference_date,
-                   ST_AsGeoJSON(u.geometry, 5) AS geometry
+                   {geometry_expr} AS geometry
             FROM administrative_units u
             JOIN administrative_levels al ON al.id = u.administrative_level_id
             WHERE u.country_id = :country_id {level_filter}
@@ -358,7 +372,14 @@ def get_boundaries(
         }
         for r in rows
     ]
-    return {"type": "FeatureCollection", "features": features}
+    return JSONResponse(
+        {"type": "FeatureCollection", "features": features},
+        headers={
+            # Boundaries change only via versioned imports; the Vercel edge
+            # caches per (path + query) so repeat map loads are instant.
+            "Cache-Control": "public, max-age=0, must-revalidate, s-maxage=86400, stale-while-revalidate=604800"
+        },
+    )
 
 
 @router.get("/units/{unit_id}")
