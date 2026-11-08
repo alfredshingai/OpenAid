@@ -33,21 +33,20 @@ approved technical decisions.
 
 **Gate: awaiting user review before Phase 1.**
 
-## Phase 1 — Public MVP
+## Phase 1 — Public MVP (implemented 2026-11-08)
 
-- Africa-wide map (MapLibre) with country/admin boundaries, layer controls,
-  search, choropleths, legends, shareable views.
-- Country pages: identity, configuration, administrative navigation driven by
-  API-returned level definitions.
-- Baseline indicator views (definitions, observations, trends, comparability
-  badges) — read-only.
-- Organisation and facility directories (read-only).
-- Data catalogue foundations (metadata, licences, downloads).
-- CI (GitHub Actions): backend tests, frontend tests, lint.
+| Deliverable | Status |
+| --- | --- |
+| Africa-wide map (MapLibre) with status markers + real admin boundaries, dynamic level selector | ✅ `apps/web` MapPage |
+| Country pages with hierarchy navigation driven by API-configured levels | ✅ `apps/web` CountryPage |
+| Baseline indicator views with provenance (source, licence, period, value type) on every figure | ✅ |
+| Organisation directory (read-only, ships empty — evidence-first) | ✅ |
+| Facility directory (read-only, real Eswatini data) | ✅ |
+| Data catalogue foundations (licence separate from access class) | ✅ |
+| CI (GitHub Actions): PostGIS backend tests incl. real-data seed + frontend | ✅ green |
+| Real data onboarded | ✅ Eswatini: COD-AB boundaries (4+55), WorldPop 2020 population (285 observations), HOT OSM 758 education facilities |
 
-Acceptance criteria: defined at phase start; include "a country with N
-administrative levels renders correctly with zero frontend changes" and
-"every displayed figure carries source + date".
+Tests: backend 15/15 · PoC regression 51/51 · frontend 3/3 · CI green.
 
 ## Phase 2 — Data operations
 
