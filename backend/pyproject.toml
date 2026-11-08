@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openaid-core"
+version = "0.2.0"
+description = "OpenAid domain library: geography, indicators, organisations, facilities, datasets"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "AGPL-3.0-or-later" }
+authors = [{ name = "OpenAid contributors" }]
+dependencies = [
+  "sqlalchemy>=2.0",
+  "geoalchemy2>=0.15",
+  "alembic>=1.13",
+  "psycopg[binary]>=3.2",
+  "shapely>=2.0",
+  "pyproj>=3.6",
+  "pydantic>=2.7",
+  "python-dotenv>=1.0",
+  "pyyaml>=6.0",
+  "geopandas>=1.0",
+  "pyogrio>=0.9",
+]
+
+[tool.setuptools.packages.find]
+include = ["openaid_core*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
