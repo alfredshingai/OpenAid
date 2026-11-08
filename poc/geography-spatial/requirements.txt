@@ -1,0 +1,17 @@
+# PoC dependency pins (regenerate with: pip freeze | grep -iE "fastapi|uvicorn|sqlalchemy|geoalchemy2|alembic|psycopg|shapely|pyproj|pydantic|python-multipart|geopandas|pyogrio|pyyaml|python-dotenv|pytest|httpx")
+fastapi>=0.115
+uvicorn[standard]>=0.30
+sqlalchemy>=2.0,<2.2
+geoalchemy2>=0.15
+alembic>=1.13
+psycopg[binary]>=3.2
+shapely>=2.0,<2.3
+pyproj>=3.6
+pydantic>=2.7,<3
+python-multipart>=0.0.9
+geopandas>=1.0
+pyogrio>=0.9
+pyyaml>=6.0
+python-dotenv>=1.0
+pytest>=8.0
+httpx>=0.27

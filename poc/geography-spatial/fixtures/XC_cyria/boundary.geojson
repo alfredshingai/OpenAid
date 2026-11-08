@@ -1,0 +1,575 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0,
+       0
+      ],
+      [
+       4,
+       0
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       0,
+       2
+      ],
+      [
+       0,
+       0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XCC",
+    "official_code": "XC-G1",
+    "source_unit_id": "XC-G1",
+    "name": "Governorate 1",
+    "admin_level": 1,
+    "parent_code": null
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       0
+      ],
+      [
+       2.0,
+       0
+      ],
+      [
+       2.0,
+       2
+      ],
+      [
+       0.0,
+       2
+      ],
+      [
+       0.0,
+       0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XCC",
+    "official_code": "XC-D1",
+    "source_unit_id": "XC-D1",
+    "name": "Department 1",
+    "admin_level": 2,
+    "parent_code": "XC-G1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       0.0
+      ],
+      [
+       2.0,
+       0.0
+      ],
+      [
+       2.0,
+       1.0
+      ],
+      [
+       0.0,
+       1.0
+      ],
+      [
+       0.0,
+       0.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XCC",
+    "official_code": "XC-M11",
+    "source_unit_id": "XC-M11",
+    "name": "Commune 11",
+    "admin_level": 3,
+    "parent_code": "XC-D1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       0.0
+      ],
+      [
+       1.0,
+       0.0
+      ],
+      [
+       1.0,
+       1.0
+      ],
+      [
+       0.0,
+       1.0
+      ],
+      [
+       0.0,
+       0.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XCC",
+    "official_code": "XC-V111",
+    "source_unit_id": "XC-V111",
+    "name": "Village 111",
+    "admin_level": 4,
+    "parent_code": "XC-M11"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       1.0,
+       0.0
+      ],
+      [
+       2.0,
+       0.0
+      ],
+      [
+       2.0,
+       1.0
+      ],
+      [
+       1.0,
+       1.0
+      ],
+      [
+       1.0,
+       0.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XCC",
+    "official_code": "XC-V112",
+    "source_unit_id": "XC-V112",
+    "name": "Village 112",
+    "admin_level": 4,
+    "parent_code": "XC-M11"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       1.0
+      ],
+      [
+       2.0,
+       1.0
+      ],
+      [
+       2.0,
+       2.0
+      ],
+      [
+       0.0,
+       2.0
+      ],
+      [
+       0.0,
+       1.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XCC",
+    "official_code": "XC-M12",
+    "source_unit_id": "XC-M12",
+    "name": "Commune 12",
+    "admin_level": 3,
+    "parent_code": "XC-D1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       1.0
+      ],
+      [
+       1.0,
+       1.0
+      ],
+      [
+       1.0,
+       2.0
+      ],
+      [
+       0.0,
+       2.0
+      ],
+      [
+       0.0,
+       1.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XCC",
+    "official_code": "XC-V121",
+    "source_unit_id": "XC-V121",
+    "name": "Village 121",
+    "admin_level": 4,
+    "parent_code": "XC-M12"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       1.0,
+       1.0
+      ],
+      [
+       2.0,
+       1.0
+      ],
+      [
+       2.0,
+       2.0
+      ],
+      [
+       1.0,
+       2.0
+      ],
+      [
+       1.0,
+       1.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XCC",
+    "official_code": "XC-V122",
+    "source_unit_id": "XC-V122",
+    "name": "Village 122",
+    "admin_level": 4,
+    "parent_code": "XC-M12"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.0,
+       0
+      ],
+      [
+       4.0,
+       0
+      ],
+      [
+       4.0,
+       2
+      ],
+      [
+       2.0,
+       2
+      ],
+      [
+       2.0,
+       0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XCC",
+    "official_code": "XC-D2",
+    "source_unit_id": "XC-D2",
+    "name": "Department 2",
+    "admin_level": 2,
+    "parent_code": "XC-G1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.0,
+       0.0
+      ],
+      [
+       4.0,
+       0.0
+      ],
+      [
+       4.0,
+       1.0
+      ],
+      [
+       2.0,
+       1.0
+      ],
+      [
+       2.0,
+       0.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XCC",
+    "official_code": "XC-M21",
+    "source_unit_id": "XC-M21",
+    "name": "Commune 21",
+    "admin_level": 3,
+    "parent_code": "XC-D2"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.0,
+       0.0
+      ],
+      [
+       3.0,
+       0.0
+      ],
+      [
+       3.0,
+       1.0
+      ],
+      [
+       2.0,
+       1.0
+      ],
+      [
+       2.0,
+       0.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XCC",
+    "official_code": "XC-V211",
+    "source_unit_id": "XC-V211",
+    "name": "Village 211",
+    "admin_level": 4,
+    "parent_code": "XC-M21"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       3.0,
+       0.0
+      ],
+      [
+       4.0,
+       0.0
+      ],
+      [
+       4.0,
+       1.0
+      ],
+      [
+       3.0,
+       1.0
+      ],
+      [
+       3.0,
+       0.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XCC",
+    "official_code": "XC-V212",
+    "source_unit_id": "XC-V212",
+    "name": "Village 212",
+    "admin_level": 4,
+    "parent_code": "XC-M21"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.0,
+       1.0
+      ],
+      [
+       4.0,
+       1.0
+      ],
+      [
+       4.0,
+       2.0
+      ],
+      [
+       2.0,
+       2.0
+      ],
+      [
+       2.0,
+       1.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XCC",
+    "official_code": "XC-M22",
+    "source_unit_id": "XC-M22",
+    "name": "Commune 22",
+    "admin_level": 3,
+    "parent_code": "XC-D2"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.0,
+       1.0
+      ],
+      [
+       3.0,
+       1.0
+      ],
+      [
+       3.0,
+       2.0
+      ],
+      [
+       2.0,
+       2.0
+      ],
+      [
+       2.0,
+       1.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XCC",
+    "official_code": "XC-V221",
+    "source_unit_id": "XC-V221",
+    "name": "Village 221",
+    "admin_level": 4,
+    "parent_code": "XC-M22"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       3.0,
+       1.0
+      ],
+      [
+       4.0,
+       1.0
+      ],
+      [
+       4.0,
+       2.0
+      ],
+      [
+       3.0,
+       2.0
+      ],
+      [
+       3.0,
+       1.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XCC",
+    "official_code": "XC-V222",
+    "source_unit_id": "XC-V222",
+    "name": "Village 222",
+    "admin_level": 4,
+    "parent_code": "XC-M22"
+   }
+  }
+ ]
+}

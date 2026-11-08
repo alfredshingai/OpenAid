@@ -1,0 +1,537 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       0
+      ],
+      [
+       2.0,
+       0
+      ],
+      [
+       2.0,
+       2
+      ],
+      [
+       0.0,
+       2
+      ],
+      [
+       0.0,
+       0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XBB",
+    "official_code": "XB-P1",
+    "source_unit_id": "XB-P1",
+    "name": "Province 1",
+    "admin_level": 1,
+    "parent_code": null
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       0.0
+      ],
+      [
+       2.0,
+       0.0
+      ],
+      [
+       2.0,
+       1.0
+      ],
+      [
+       0.0,
+       1.0
+      ],
+      [
+       0.0,
+       0.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XBB",
+    "official_code": "XB-C11",
+    "source_unit_id": "XB-C11",
+    "name": "County 11",
+    "admin_level": 2,
+    "parent_code": "XB-P1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       0.0
+      ],
+      [
+       1.0,
+       0.0
+      ],
+      [
+       1.0,
+       1.0
+      ],
+      [
+       0.0,
+       1.0
+      ],
+      [
+       0.0,
+       0.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XBB",
+    "official_code": "XB-W111",
+    "source_unit_id": "XB-W111",
+    "name": "Ward 111",
+    "admin_level": 3,
+    "parent_code": "XB-C11"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       1.0,
+       0.0
+      ],
+      [
+       2.0,
+       0.0
+      ],
+      [
+       2.0,
+       1.0
+      ],
+      [
+       1.0,
+       1.0
+      ],
+      [
+       1.0,
+       0.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XBB",
+    "official_code": "XB-W112",
+    "source_unit_id": "XB-W112",
+    "name": "Ward 112",
+    "admin_level": 3,
+    "parent_code": "XB-C11"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       1.0
+      ],
+      [
+       2.0,
+       1.0
+      ],
+      [
+       2.0,
+       2.0
+      ],
+      [
+       0.0,
+       2.0
+      ],
+      [
+       0.0,
+       1.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XBB",
+    "official_code": "XB-C12",
+    "source_unit_id": "XB-C12",
+    "name": "County 12",
+    "admin_level": 2,
+    "parent_code": "XB-P1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       1.0
+      ],
+      [
+       1.0,
+       1.0
+      ],
+      [
+       1.0,
+       2.0
+      ],
+      [
+       0.0,
+       2.0
+      ],
+      [
+       0.0,
+       1.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XBB",
+    "official_code": "XB-W121",
+    "source_unit_id": "XB-W121",
+    "name": "Ward 121",
+    "admin_level": 3,
+    "parent_code": "XB-C12"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       1.0,
+       1.0
+      ],
+      [
+       2.0,
+       1.0
+      ],
+      [
+       2.0,
+       2.0
+      ],
+      [
+       1.0,
+       2.0
+      ],
+      [
+       1.0,
+       1.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XBB",
+    "official_code": "XB-W122",
+    "source_unit_id": "XB-W122",
+    "name": "Ward 122",
+    "admin_level": 3,
+    "parent_code": "XB-C12"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.0,
+       0
+      ],
+      [
+       4.0,
+       0
+      ],
+      [
+       4.0,
+       2
+      ],
+      [
+       2.0,
+       2
+      ],
+      [
+       2.0,
+       0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XBB",
+    "official_code": "XB-P2",
+    "source_unit_id": "XB-P2",
+    "name": "Province 2",
+    "admin_level": 1,
+    "parent_code": null
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.0,
+       0.0
+      ],
+      [
+       4.0,
+       0.0
+      ],
+      [
+       4.0,
+       1.0
+      ],
+      [
+       2.0,
+       1.0
+      ],
+      [
+       2.0,
+       0.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XBB",
+    "official_code": "XB-C21",
+    "source_unit_id": "XB-C21",
+    "name": "County 21",
+    "admin_level": 2,
+    "parent_code": "XB-P2"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.0,
+       0.0
+      ],
+      [
+       3.0,
+       0.0
+      ],
+      [
+       3.0,
+       1.0
+      ],
+      [
+       2.0,
+       1.0
+      ],
+      [
+       2.0,
+       0.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XBB",
+    "official_code": "XB-W211",
+    "source_unit_id": "XB-W211",
+    "name": "Ward 211",
+    "admin_level": 3,
+    "parent_code": "XB-C21"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       3.0,
+       0.0
+      ],
+      [
+       4.0,
+       0.0
+      ],
+      [
+       4.0,
+       1.0
+      ],
+      [
+       3.0,
+       1.0
+      ],
+      [
+       3.0,
+       0.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XBB",
+    "official_code": "XB-W212",
+    "source_unit_id": "XB-W212",
+    "name": "Ward 212",
+    "admin_level": 3,
+    "parent_code": "XB-C21"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.0,
+       1.0
+      ],
+      [
+       4.0,
+       1.0
+      ],
+      [
+       4.0,
+       2.0
+      ],
+      [
+       2.0,
+       2.0
+      ],
+      [
+       2.0,
+       1.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XBB",
+    "official_code": "XB-C22",
+    "source_unit_id": "XB-C22",
+    "name": "County 22",
+    "admin_level": 2,
+    "parent_code": "XB-P2"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.0,
+       1.0
+      ],
+      [
+       3.0,
+       1.0
+      ],
+      [
+       3.0,
+       2.0
+      ],
+      [
+       2.0,
+       2.0
+      ],
+      [
+       2.0,
+       1.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XBB",
+    "official_code": "XB-W221",
+    "source_unit_id": "XB-W221",
+    "name": "Ward 221",
+    "admin_level": 3,
+    "parent_code": "XB-C22"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       3.0,
+       1.0
+      ],
+      [
+       4.0,
+       1.0
+      ],
+      [
+       4.0,
+       2.0
+      ],
+      [
+       3.0,
+       2.0
+      ],
+      [
+       3.0,
+       1.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XBB",
+    "official_code": "XB-W222",
+    "source_unit_id": "XB-W222",
+    "name": "Ward 222",
+    "admin_level": 3,
+    "parent_code": "XB-C22"
+   }
+  }
+ ]
+}

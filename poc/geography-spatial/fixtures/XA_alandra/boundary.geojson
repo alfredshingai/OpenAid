@@ -1,0 +1,347 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       0
+      ],
+      [
+       2.0,
+       0
+      ],
+      [
+       2.0,
+       2
+      ],
+      [
+       0.0,
+       2
+      ],
+      [
+       0.0,
+       0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XAA",
+    "official_code": "XA-R1",
+    "source_unit_id": "XA-R1",
+    "name": "Region 1",
+    "admin_level": 1,
+    "parent_code": null
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       0.0
+      ],
+      [
+       2.0,
+       0.0
+      ],
+      [
+       2.0,
+       1.0
+      ],
+      [
+       0.0,
+       1.0
+      ],
+      [
+       0.0,
+       0.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XAA",
+    "official_code": "XA-D11",
+    "source_unit_id": "XA-D11",
+    "name": "District 11",
+    "admin_level": 2,
+    "parent_code": "XA-R1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       1.0
+      ],
+      [
+       2.0,
+       1.0
+      ],
+      [
+       2.0,
+       2.0
+      ],
+      [
+       0.0,
+       2.0
+      ],
+      [
+       0.0,
+       1.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XAA",
+    "official_code": "XA-D12",
+    "source_unit_id": "XA-D12",
+    "name": "District 12",
+    "admin_level": 2,
+    "parent_code": "XA-R1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.0,
+       0
+      ],
+      [
+       4.0,
+       0
+      ],
+      [
+       4.0,
+       2
+      ],
+      [
+       2.0,
+       2
+      ],
+      [
+       2.0,
+       0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XAA",
+    "official_code": "XA-R2",
+    "source_unit_id": "XA-R2",
+    "name": "Region 2",
+    "admin_level": 1,
+    "parent_code": null
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.0,
+       0.0
+      ],
+      [
+       4.0,
+       0.0
+      ],
+      [
+       4.0,
+       1.0
+      ],
+      [
+       2.0,
+       1.0
+      ],
+      [
+       2.0,
+       0.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XAA",
+    "official_code": "XA-D21",
+    "source_unit_id": "XA-D21",
+    "name": "District 21",
+    "admin_level": 2,
+    "parent_code": "XA-R2"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.0,
+       1.0
+      ],
+      [
+       4.0,
+       1.0
+      ],
+      [
+       4.0,
+       2.0
+      ],
+      [
+       2.0,
+       2.0
+      ],
+      [
+       2.0,
+       1.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XAA",
+    "official_code": "XA-D22",
+    "source_unit_id": "XA-D22",
+    "name": "District 22",
+    "admin_level": 2,
+    "parent_code": "XA-R2"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       4.0,
+       0
+      ],
+      [
+       6.0,
+       0
+      ],
+      [
+       6.0,
+       2
+      ],
+      [
+       4.0,
+       2
+      ],
+      [
+       4.0,
+       0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XAA",
+    "official_code": "XA-R3",
+    "source_unit_id": "XA-R3",
+    "name": "Region 3",
+    "admin_level": 1,
+    "parent_code": null
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       4.0,
+       0.0
+      ],
+      [
+       6.0,
+       0.0
+      ],
+      [
+       6.0,
+       1.0
+      ],
+      [
+       4.0,
+       1.0
+      ],
+      [
+       4.0,
+       0.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XAA",
+    "official_code": "XA-D31",
+    "source_unit_id": "XA-D31",
+    "name": "District 31",
+    "admin_level": 2,
+    "parent_code": "XA-R3"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       4.0,
+       1.0
+      ],
+      [
+       6.0,
+       1.0
+      ],
+      [
+       6.0,
+       2.0
+      ],
+      [
+       4.0,
+       2.0
+      ],
+      [
+       4.0,
+       1.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "country_iso3": "XAA",
+    "official_code": "XA-D32",
+    "source_unit_id": "XA-D32",
+    "name": "District 32",
+    "admin_level": 2,
+    "parent_code": "XA-R3"
+   }
+  }
+ ]
+}
