@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, type Country } from '../api'
 import { ErrorBox, Spinner } from '../components'
+import { whenMapReady } from '../mapReady'
 
 /** Africa-wide map: markers for every supported country (status-coloured),
  * real boundaries and choropleth for onboarded countries. */
@@ -20,7 +21,13 @@ export default function MapPage() {
   }, [])
 
   useEffect(() => {
-    if (!mapRef.current || mapObj.current) return
+    const dbg = ((window as unknown as Record<string, unknown>).__mapPageDebug ??= {}) as Record<string, unknown>
+    dbg.effectRuns = (dbg.effectRuns as number ?? 0) + 1
+    if (!mapRef.current || mapObj.current) {
+      dbg.skipped = { mapRef: !!mapRef.current, mapObj: !!mapObj.current }
+      return
+    }
+    try {
     mapObj.current = new maplibregl.Map({
       container: mapRef.current,
       style: {
@@ -32,7 +39,17 @@ export default function MapPage() {
       zoom: 2.4,
     })
     mapObj.current.addControl(new maplibregl.NavigationControl())
-    return () => mapObj.current?.remove()
+    // Null the ref on teardown: React StrictMode mounts effects twice, and a
+    // stale removed-map reference made the re-run skip map creation entirely
+    // (the "Africa map shows nothing" bug).
+    } catch (err) {
+      dbg.constructorError = String(err)
+      setError(`Map failed to start: ${String(err)}`)
+    }
+    return () => {
+      mapObj.current?.remove()
+      mapObj.current = null
+    }
   }, [])
 
   // markers for all countries
@@ -58,6 +75,14 @@ export default function MapPage() {
         })),
     }
     const addLayers = () => {
+      try {
+      // Idempotent: StrictMode double-fires effects, so update in place
+      // when the source already exists instead of re-adding it.
+      const existing = map.getSource('countries') as maplibregl.GeoJSONSource | undefined
+      if (existing) {
+        existing.setData(fc)
+        return
+      }
       map.addSource('countries', { type: 'geojson', data: fc })
       map.addLayer({
         id: 'country-dots',
@@ -78,9 +103,11 @@ export default function MapPage() {
       })
       map.on('mouseenter', 'country-dots', () => (map.getCanvas().style.cursor = 'pointer'))
       map.on('mouseleave', 'country-dots', () => (map.getCanvas().style.cursor = ''))
+      } catch (err) {
+        setError(`Map layer failed: ${String(err)}`)
+      }
     }
-    if (map.isStyleLoaded()) addLayers()
-    else map.on('load', addLayers)
+    whenMapReady(map, addLayers)
   }, [countries])
 
   // boundaries for the selected onboarded country
@@ -89,51 +116,64 @@ export default function MapPage() {
     if (!map || !selected) return
     if (selected.status !== 'active') return
     let cancelled = false
-    api.boundaries(selected.iso3, level).then((fc) => {
-      if (cancelled) return
-      if (map.getLayer('admin-fill')) map.removeLayer('admin-fill')
-      if (map.getLayer('admin-line')) map.removeLayer('admin-line')
-      if (map.getSource('admin')) map.removeSource('admin')
-      map.addSource('admin', { type: 'geojson', data: fc })
-      map.addLayer({
-        id: 'admin-fill',
-        type: 'fill',
-        source: 'admin',
-        paint: { 'fill-color': '#1d4ed8', 'fill-opacity': 0.18 },
-      })
-      map.addLayer({
-        id: 'admin-line',
-        type: 'line',
-        source: 'admin',
-        paint: { 'line-color': '#1d4ed8', 'line-width': 1.6 },
-      })
-      const xs: number[] = []
-      const ys: number[] = []
-      for (const f of fc.features) {
-        const ring = (f.geometry as import('geojson').Polygon).coordinates[0]
-        for (const [x, y] of ring) {
-          xs.push(x)
-          ys.push(y)
+    const draw = () => {
+      api.boundaries(selected.iso3, level).then((fc) => {
+        if (cancelled) return
+        try {
+          if (map.getLayer('admin-fill')) map.removeLayer('admin-fill')
+          if (map.getLayer('admin-line')) map.removeLayer('admin-line')
+          if (map.getSource('admin')) map.removeSource('admin')
+          map.addSource('admin', { type: 'geojson', data: fc })
+          map.addLayer({
+            id: 'admin-fill',
+            type: 'fill',
+            source: 'admin',
+            paint: { 'fill-color': '#1d4ed8', 'fill-opacity': 0.2 },
+          })
+          map.addLayer({
+            id: 'admin-line',
+            type: 'line',
+            source: 'admin',
+            paint: { 'line-color': '#1e40af', 'line-width': 1.8 },
+          })
+          // Loop-based bounds: handles Polygon AND MultiPolygon, and avoids
+          // spreading tens of thousands of coordinates into Math.min/max.
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+          for (const f of fc.features) {
+            const geom = f.geometry as import('geojson').Polygon | import('geojson').MultiPolygon
+            const polygons = geom.type === 'Polygon' ? [geom.coordinates] : geom.coordinates
+            for (const polygon of polygons) {
+              for (const [x, y] of polygon[0]) {
+                if (x < minX) minX = x
+                if (y < minY) minY = y
+                if (x > maxX) maxX = x
+                if (y > maxY) maxY = y
+              }
+            }
+          }
+          if (minX !== Infinity) {
+            map.fitBounds(
+              [
+                [minX, minY],
+                [maxX, maxY],
+              ],
+              { padding: 60, duration: 500 },
+            )
+          }
+        } catch (err) {
+          setError(`Boundary layer failed: ${String(err)}`)
         }
-      }
-      if (xs.length) {
-        map.fitBounds(
-          [
-            [Math.min(...xs), Math.min(...ys)],
-            [Math.max(...xs), Math.max(...ys)],
-          ],
-          { padding: 60, duration: 500 },
-        )
-      }
-    })
+      }).catch((err) => setError(`Boundary data failed: ${String(err)}`))
+    }
+    whenMapReady(map, draw)
     return () => {
       cancelled = true
     }
   }, [selected, level])
 
-  if (error) return <div className="max-w-6xl mx-auto px-4 py-10"><ErrorBox message={error} /></div>
-  if (!countries) return <Spinner />
-
+  // The map container MUST stay mounted from the first render: the init
+  // effect runs once, and a conditional Spinner here used to leave the ref
+  // null at effect time — the map was then never created.
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
       <div className="flex flex-wrap items-center gap-3 mb-3">
@@ -158,7 +198,14 @@ export default function MapPage() {
       </div>
 
       <div className="grid lg:grid-cols-[1fr_280px] gap-4">
-        <div ref={mapRef} className="h-[540px] rounded-lg border border-slate-200" />
+        <div className="relative">
+          <div ref={mapRef} className="h-[540px] rounded-lg border border-slate-200" />
+          {(error || !countries) && (
+            <div className="absolute inset-0 flex items-center justify-center bg-slate-50/80 rounded-lg">
+              {error ? <ErrorBox message={error} /> : <Spinner />}
+            </div>
+          )}
+        </div>
         <aside className="text-sm">
           {!selected ? (
             <div className="border border-slate-200 rounded-lg p-4 bg-white text-slate-500">

@@ -5,6 +5,7 @@ import * as maplibregl from 'maplibre-gl'
 import type { FeatureCollection, Polygon, MultiPolygon } from 'geojson'
 import { api, type Country, type Facility, type Observation, type Unit } from '../api'
 import { ErrorBox, ObservationCard, Spinner, StatusChip } from '../components'
+import { whenMapReady } from '../mapReady'
 
 /** Country profile: interactive boundary map, dynamic hierarchy navigation
  * (labels come from the API, never from code), indicator cards with
@@ -152,6 +153,7 @@ function CountryMap({
   const mapRef = useRef<HTMLDivElement>(null)
   const mapObj = useRef<maplibregl.Map | null>(null)
   const [level, setLevel] = useState(country.max_level)
+  const [mapError, setMapError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!mapRef.current || mapObj.current) return
@@ -180,6 +182,7 @@ function CountryMap({
       api.boundaries(country.iso3, level).then((fc) => {
       if (cancelled || !mapObj.current) return
       const m = mapObj.current
+      try {
       for (const layer of ['units-fill', 'units-line']) {
         if (m.getLayer(layer)) m.removeLayer(layer)
       }
@@ -215,26 +218,38 @@ function CountryMap({
       m.on('mouseenter', 'units-fill', () => (m.getCanvas().style.cursor = 'pointer'))
       m.on('mouseleave', 'units-fill', () => (m.getCanvas().style.cursor = ''))
 
-      const xs: number[] = []
-      const ys: number[] = []
+      // Loop-based bounds: spreading tens of thousands of coordinates into
+      // Math.min/Math.max overflows the call stack on large countries.
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
       for (const f of fc.features) {
         const geom = f.geometry as Polygon | MultiPolygon
         const rings = geom.type === 'Polygon' ? [geom.coordinates[0]] : geom.coordinates.map((p) => p[0])
-        for (const ring of rings) for (const [x, y] of ring) { xs.push(x); ys.push(y) }
+        for (const ring of rings) {
+          for (const [x, y] of ring) {
+            if (x < minX) minX = x
+            if (y < minY) minY = y
+            if (x > maxX) maxX = x
+            if (y > maxY) maxY = y
+          }
+        }
       }
-      if (xs.length) {
+      if (minX !== Infinity) {
         m.fitBounds(
           [
-            [Math.min(...xs), Math.min(...ys)],
-            [Math.max(...xs), Math.max(...ys)],
+            [minX, minY],
+            [maxX, maxY],
           ],
           { padding: 40, duration: 400 },
         )
       }
+      } catch (err) {
+        if (!cancelled) setMapError(`Boundary layer failed: ${String(err)}`)
+      }
+      }).catch((err) => {
+        if (!cancelled) setMapError(`Boundary data failed: ${String(err)}`)
       })
     }
-    if (map.isStyleLoaded()) draw()
-    else map.once('load', draw)
+    whenMapReady(map, draw)
     return () => {
       cancelled = true
     }
@@ -283,8 +298,7 @@ function CountryMap({
         })
       }
     }
-    if (m.isStyleLoaded()) add()
-    else m.once('load', add)
+    whenMapReady(m, add)
   }, [facilities])
 
   return (
@@ -309,6 +323,11 @@ function CountryMap({
           </span>
         )}
       </div>
+      {mapError && (
+        <div className="mb-2 bg-amber-50 border border-amber-200 text-amber-800 rounded p-2 text-xs">
+          {mapError}
+        </div>
+      )}
       <div ref={mapRef} className="h-[420px] rounded-lg border border-slate-200" />
       <p className="mt-1 text-[11px] text-slate-400">
         Click a unit to load its indicators · facility dots are a mapping
