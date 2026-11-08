@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OpenAid Geography PoC — Map Preview</title>
+<link rel="stylesheet" href="/static/maplibre-gl.css" />
+<script src="/static/maplibre-gl.js"></script>
+<style>
+  :root { color-scheme: light; }
+  body { margin: 0; font-family: "Segoe UI", system-ui, sans-serif; display: flex; height: 100vh; }
+  #sidebar { width: 320px; padding: 16px; box-sizing: border-box; background: #f7f8fa; border-right: 1px solid #e0e3e8; overflow-y: auto; }
+  #map { flex: 1; }
+  h1 { font-size: 18px; margin: 0 0 2px; }
+  .tagline { font-size: 12px; color: #5b6572; margin-bottom: 14px; }
+  .synthetic-warning { background: #fff6e0; border: 1px solid #e8c96a; border-radius: 6px;
+    padding: 8px 10px; font-size: 11.5px; color: #6b5410; margin-bottom: 14px; }
+  label { display: block; font-size: 12px; font-weight: 600; color: #33404e; margin: 10px 0 4px; }
+  select { width: 100%; padding: 6px; border: 1px solid #c6cdd6; border-radius: 5px; font-size: 13px; }
+  #info { font-size: 12px; line-height: 1.5; margin-top: 12px; color: #223; }
+  #info b { color: #0b5; }
+  .unit-row { padding: 6px 8px; border: 1px solid #dde3ea; border-radius: 5px; margin-top: 6px; background: #fff; cursor: pointer; }
+  .unit-row:hover { border-color: #3f8cff; }
+  .unit-row .code { font-weight: 700; }
+  .unit-row .lvl { float: right; color: #68737f; font-size: 11px; }
+  .ancestors { color: #68737f; font-size: 11px; margin-top: 2px; }
+  .legend { font-size: 11px; color: #5b6572; margin-top: 16px; border-top: 1px solid #e0e3e8; padding-top: 8px; }
+</style>
+</head>
+<body>
+<div id="sidebar">
+  <h1>OpenAid — Geography PoC</h1>
+  <div class="tagline">Open data. Stronger communities. Better decisions.</div>
+  <div class="synthetic-warning">
+    ⚠️ <b>Synthetic demonstration data.</b> The countries below (Alandra,
+    Boroland, Cyria) are invented fixtures for the blueprint §16 proof of
+    concept. This is not real-world evidence.
+  </div>
+
+  <label for="country">Country</label>
+  <select id="country"></select>
+
+  <label for="level">Administrative level</label>
+  <select id="level"></select>
+
+  <div id="info">Loading…</div>
+
+  <div class="legend">
+    Level colours: L1 <span style="color:#2f6fed">■</span>
+    L2 <span style="color:#e07b39">■</span>
+    L3 <span style="color:#2ca02c">■</span>
+    L4 <span style="color:#9467bd">■</span><br/>
+    Click the map to run a point-in-polygon query.
+  </div>
+</div>
+<div id="map"></div>
+
+<script>
+const LEVEL_COLORS = ["#2f6fed", "#e07b39", "#2ca02c", "#9467bd", "#17becf"];
+
+const map = new maplibregl.Map({
+  container: "map",
+  style: { version: 8, sources: {}, layers: [
+    { id: "bg", type: "background", paint: { "background-color": "#eef2f6" } }
+  ]},
+  center: [2, 1], zoom: 4,
+});
+map.addControl(new maplibregl.NavigationControl());
+
+let countries = [];
+let currentCountry = null;
+let currentLevel = null;
+
+async function api(path) {
+  const r = await fetch(path);
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+function fillLevels() {
+  const sel = document.getElementById("level");
+  sel.innerHTML = "";
+  for (const lvl of currentCountry.levels) {
+    const opt = document.createElement("option");
+    opt.value = lvl.level_number;
+    opt.textContent = `L${lvl.level_number} · ${lvl.level_name} (${lvl.unit_count})`;
+    sel.appendChild(opt);
+  }
+  if (currentCountry.levels.length) {
+    sel.value = currentCountry.levels[currentCountry.levels.length - 1].level_number;
+    loadBoundaries();
+  }
+}
+
+async function loadBoundaries() {
+  const level = parseInt(document.getElementById("level").value, 10);
+  currentLevel = level;
+  const fc = await api(`/api/v1/countries/${currentCountry.iso3}/boundaries?level_number=${level}`);
+  const color = LEVEL_COLORS[(level - 1) % LEVEL_COLORS.length];
+  if (map.getSource("units")) map.removeSource("units");
+  if (map.getLayer("units-fill")) map.removeLayer("units-fill");
+  if (map.getLayer("units-line")) map.removeLayer("units-line");
+  map.addSource("units", { type: "geojson", data: fc });
+  map.addLayer({
+    id: "units-fill", type: "fill", source: "units",
+    paint: { "fill-color": color, "fill-opacity": 0.25 },
+  });
+  map.addLayer({
+    id: "units-line", type: "line", source: "units",
+    paint: { "line-color": color, "line-width": 1.4 },
+  });
+  // fit bounds
+  const xs = [], ys = [];
+  for (const f of fc.features) {
+    for (const poly of f.geometry.coordinates) for (const ring of [poly]) {
+      for (const [x, y] of ring[0]) { xs.push(x); ys.push(y); }
+    }
+  }
+  if (xs.length) map.fitBounds([[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)]], { padding: 40, duration: 400 });
+  document.getElementById("info").innerHTML =
+    `Showing <b>${fc.features.length}</b> ${currentCountry.levels.find(l => l.level_number === level).level_name} units of <b>${currentCountry.name}</b>. Click a unit.`;
+}
+
+async function clickPoint(lngLat) {
+  const { lng, lat } = lngLat;
+  const res = await api(`/api/v1/spatial/point?lon=${lng.toFixed(5)}&lat=${lat.toFixed(5)}&country_iso3=${currentCountry.iso3}`);
+  if (!res.match_count) { document.getElementById("info").innerHTML = "No administrative unit contains this point."; return; }
+  const deepest = res.matches[res.matches.length - 1];
+  const anc = await api(`/api/v1/units/${deepest.id}/ancestors`);
+  document.getElementById("info").innerHTML =
+    `<div class="unit-row"><span class="lvl">L${deepest.level_number}</span>` +
+    `<span class="code">${deepest.official_code}</span> — ${deepest.name} <i>(${deepest.level_name})</i>` +
+    `<div class="ancestors">↑ ${anc.map(a => `${a.official_code} (${a.level_name})`).join(" ← ")}</div></div>`;
+}
+
+map.on("click", async (e) => {
+  if (currentCountry) clickPoint(e.lngLat).catch(console.error);
+});
+
+async function init() {
+  countries = await api("/api/v1/countries");
+  const sel = document.getElementById("country");
+  for (const c of countries) {
+    const opt = document.createElement("option");
+    opt.value = c.iso3;
+    opt.textContent = `${c.name} (${c.iso3}) — ${c.max_level} levels`;
+    sel.appendChild(opt);
+  }
+  sel.onchange = async () => {
+    currentCountry = countries.find(c => c.iso3 === sel.value);
+    currentCountry = await api(`/api/v1/countries/${currentCountry.iso3}`);
+    fillLevels();
+  };
+  if (countries.length) sel.onchange();
+}
+
+init().catch(e => { document.getElementById("info").textContent = "API error: " + e.message; });
+document.getElementById("level").onchange = loadBoundaries;
+</script>
+</body>
+</html>

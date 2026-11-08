@@ -1,0 +1,112 @@
+{
+ "generated": "2026-11-08",
+ "database": "openaid_poc_report (throwaway)",
+ "batches": [
+  {
+   "country": "XAA",
+   "status": "completed",
+   "format": "geojson",
+   "filename": "XA_alandra/boundary.geojson",
+   "received": 9,
+   "imported": 9,
+   "upserted": 0,
+   "quarantined": 0,
+   "warnings": [
+    "feature 0: normalised Polygon to MultiPolygon (lossless)",
+    "feature 1: normalised Polygon to MultiPolygon (lossless)",
+    "feature 2: normalised Polygon to MultiPolygon (lossless)",
+    "feature 3: normalised Polygon to MultiPolygon (lossless)",
+    "feature 4: normalised Polygon to MultiPolygon (lossless)",
+    "feature 5: normalised Polygon to MultiPolygon (lossless)",
+    "feature 6: normalised Polygon to MultiPolygon (lossless)",
+    "feature 7: normalised Polygon to MultiPolygon (lossless)",
+    "feature 8: normalised Polygon to MultiPolygon (lossless)"
+   ],
+   "issues": []
+  },
+  {
+   "country": "XBB",
+   "status": "completed",
+   "format": "geojson",
+   "filename": "XB_boroland/boundary.geojson",
+   "received": 14,
+   "imported": 14,
+   "upserted": 0,
+   "quarantined": 0,
+   "warnings": [
+    "feature 0: normalised Polygon to MultiPolygon (lossless)",
+    "feature 1: normalised Polygon to MultiPolygon (lossless)",
+    "feature 2: normalised Polygon to MultiPolygon (lossless)",
+    "feature 3: normalised Polygon to MultiPolygon (lossless)",
+    "feature 4: normalised Polygon to MultiPolygon (lossless)",
+    "feature 5: normalised Polygon to MultiPolygon (lossless)",
+    "feature 6: normalised Polygon to MultiPolygon (lossless)",
+    "feature 7: normalised Polygon to MultiPolygon (lossless)",
+    "feature 8: normalised Polygon to MultiPolygon (lossless)",
+    "feature 9: normalised Polygon to MultiPolygon (lossless)",
+    "feature 10: normalised Polygon to MultiPolygon (lossless)",
+    "feature 11: normalised Polygon to MultiPolygon (lossless)",
+    "feature 12: normalised Polygon to MultiPolygon (lossless)",
+    "feature 13: normalised Polygon to MultiPolygon (lossless)"
+   ],
+   "issues": []
+  },
+  {
+   "country": "XCC",
+   "status": "completed",
+   "format": "geojson",
+   "filename": "XC_cyria/boundary.geojson",
+   "received": 15,
+   "imported": 15,
+   "upserted": 0,
+   "quarantined": 0,
+   "warnings": [
+    "feature 0: normalised Polygon to MultiPolygon (lossless)",
+    "feature 1: normalised Polygon to MultiPolygon (lossless)",
+    "feature 2: normalised Polygon to MultiPolygon (lossless)",
+    "feature 3: normalised Polygon to MultiPolygon (lossless)",
+    "feature 4: normalised Polygon to MultiPolygon (lossless)",
+    "feature 5: normalised Polygon to MultiPolygon (lossless)",
+    "feature 6: normalised Polygon to MultiPolygon (lossless)",
+    "feature 7: normalised Polygon to MultiPolygon (lossless)",
+    "feature 8: normalised Polygon to MultiPolygon (lossless)",
+    "feature 9: normalised Polygon to MultiPolygon (lossless)",
+    "feature 10: normalised Polygon to MultiPolygon (lossless)",
+    "feature 11: normalised Polygon to MultiPolygon (lossless)",
+    "feature 12: normalised Polygon to MultiPolygon (lossless)",
+    "feature 13: normalised Polygon to MultiPolygon (lossless)",
+    "feature 14: normalised Polygon to MultiPolygon (lossless)"
+   ],
+   "issues": []
+  }
+ ],
+ "spatial_checks": {
+  "XAA": {
+   "point": [
+    1.0,
+    0.5
+   ],
+   "deepest": "XA-D11",
+   "expected": "XA-D11",
+   "pass": true
+  },
+  "XBB": {
+   "point": [
+    1.5,
+    1.5
+   ],
+   "deepest": "XB-W122",
+   "expected": "XB-W122",
+   "pass": true
+  },
+  "XCC": {
+   "point": [
+    0.5,
+    0.5
+   ],
+   "deepest": "XC-V111",
+   "expected": "XC-V111",
+   "pass": true
+  }
+ }
+}

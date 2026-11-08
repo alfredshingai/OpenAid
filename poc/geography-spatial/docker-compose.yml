@@ -1,0 +1,52 @@
+# OpenAid geography & spatial PoC — reproducible setup (blueprint §16).
+#
+#   docker compose up --build -d
+#   docker compose exec api python -m openaid_poc.cli init-db
+#   docker compose exec api python -m openaid_poc.cli seed-countries fixtures
+#   docker compose exec api python -m openaid_poc.cli import fixtures/XA_alandra/boundary.geojson --country XAA --synthetic
+#
+# Then open http://localhost:8000/preview and http://localhost:8000/docs
+#
+# The test suite runs inside the api container:
+#   docker compose exec api python -m pytest tests/ -v
+
+services:
+  db:
+    image: postgis/postgis:18-3.7
+    environment:
+      POSTGRES_DB: openaid_poc
+      POSTGRES_USER: openaid
+      POSTGRES_PASSWORD: openaid_dev_poc
+    ports:
+      - "5432:5432"
+    volumes:
+      - poc_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openaid -d openaid_poc"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://openaid:openaid_dev_poc@db:5432/openaid_poc
+      OPENAID_API_PORT: "8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      # Bind-mount for development convenience (fixtures visible to the container).
+      - ./fixtures:/app/fixtures:ro
+      - ./tests:/app/tests:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "python -m openaid_poc.cli init-db &&
+             python -m openaid_poc.cli seed-countries /app/fixtures &&
+             uvicorn openaid_poc.api:app --host 0.0.0.0 --port 8000"
+
+volumes:
+  poc_pgdata:

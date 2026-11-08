@@ -16,7 +16,8 @@ from typing import Any, Iterator
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from geoalchemy2 import WKTElement
 from geoalchemy2.shape import to_shape
 from pydantic import BaseModel, Field, field_validator
@@ -276,6 +277,15 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Map preview (vendored MapLibre GL — no external CDN dependency)
+    static_dir = Path(__file__).resolve().parent / "static"
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+    @app.get("/preview", include_in_schema=False)
+    def preview() -> FileResponse:
+        """Lightweight MapLibre preview of the ingested synthetic fixtures."""
+        return FileResponse(static_dir / "index.html")
 
     # -- health ------------------------------------------------------------
     @app.get("/health", tags=["system"])

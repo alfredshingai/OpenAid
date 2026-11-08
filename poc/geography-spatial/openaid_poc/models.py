@@ -108,7 +108,7 @@ class CountryConfiguration(Base):
         UUID(as_uuid=True), ForeignKey("countries.id", ondelete="CASCADE"), primary_key=True
     )
     languages: Mapped[list | None] = mapped_column(JSONB)
-    currency: Mapped[str | None] = mapped_column(String(20))
+    currency: Mapped[str | None] = mapped_column(String(60))
     timezone: Mapped[str | None] = mapped_column(String(100))
     terminology: Mapped[dict | None] = mapped_column(JSONB)
     configuration: Mapped[dict | None] = mapped_column(JSONB)
