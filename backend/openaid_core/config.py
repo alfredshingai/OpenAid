@@ -10,7 +10,11 @@ from dotenv import load_dotenv
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
+# .env first (committed template values), then .env.local (Neon CLI output /
+# machine-local overrides) — load_dotenv does not override existing vars, so
+# .env.local wins where both define a key.
 load_dotenv(REPO_ROOT / ".env")
+load_dotenv(REPO_ROOT / ".env.local")
 
 DEFAULT_DB_URL = "postgresql+psycopg://openaid:openaid_dev_poc@127.0.0.1:5433/openaid"
 
@@ -20,7 +24,13 @@ ALLOWED_GEOMETRY_TYPES = {"Polygon", "MultiPolygon"}
 
 class Settings:
     def __init__(self) -> None:
-        self.database_url: str = os.environ.get("DATABASE_URL", DEFAULT_DB_URL)
+        raw_url = os.environ.get("DATABASE_URL", DEFAULT_DB_URL)
+        # Neon-style URLs ("postgresql://...") are normalised to the psycopg
+        # driver scheme SQLAlchemy needs; pooled/unpooled selection is done by
+        # whichever URL the environment provides (see DEPLOYMENT.md).
+        if raw_url.startswith("postgresql://"):
+            raw_url = "postgresql+psycopg://" + raw_url[len("postgresql://"):]
+        self.database_url: str = raw_url
         self.api_host: str = os.environ.get("OPENAID_API_HOST", "0.0.0.0")
         self.api_port: int = int(os.environ.get("OPENAID_API_PORT", "8000"))
         self.api_log_level: str = os.environ.get("OPENAID_API_LOG_LEVEL", "info")

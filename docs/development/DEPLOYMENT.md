@@ -12,7 +12,25 @@ tiers both support PostGIS).
 
 ## One-time setup
 
-### 1. Create the database (Neon, free tier)
+### 1. Create the database (Neon CLI — automated)
+
+The repo is wired for the Neon CLI (`neon.ts` declares the Postgres
+service; `.claude/skills/neon-postgres/` + `.mcp.json` carry the agent
+skill and MCP server):
+
+```bash
+npm i -g neon@latest
+neon auth                                      # browser sign-in
+neon init -y --org-id <org> --project-id <proj> --branch production --services postgres
+neon deploy                                    # writes .env.local (gitignored)
+```
+
+`neon deploy` pulls `DATABASE_URL` (pooled — used by the app runtime) and
+`DATABASE_URL_UNPOOLED` (direct — used for schema migrations) into
+`.env.local`, which `openaid_core.config` loads automatically and
+normalises to the psycopg driver scheme.
+
+Manual alternative:
 
 1. Sign up at https://neon.tech → create a project → copy the pooled
    connection string, e.g.
@@ -34,6 +52,9 @@ tiers both support PostGIS).
      .venv/Scripts/python.exe -m openaid_core.seed.cbk \
      --bundle-dir /tmp/cbk/ken-baseline-2026-11-01 --country KEN
    ```
+
+> **Pooled vs direct** (per `.claude/skills/neon-postgres/`): the API and
+> seeds use the pooled URL; Alembic migrations use `DATABASE_URL_UNPOOLED`.
 
 ### 2. Import the repo into Vercel
 
