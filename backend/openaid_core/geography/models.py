@@ -73,6 +73,11 @@ class Country(Base):
     # (never for analysis — boundaries are the authoritative geometry).
     rep_lon: Mapped[float | None] = mapped_column(Numeric(8, 4))
     rep_lat: Mapped[float | None] = mapped_column(Numeric(8, 4))
+    # Country outline (admin-0, from the same COD-AB source as admin units);
+    # served (simplified) for continental map rendering.
+    boundary: Mapped[object | None] = mapped_column(
+        Geometry(geometry_type="MULTIPOLYGON", srid=4326, spatial_index=True), nullable=True
+    )
     status: Mapped[CountryStatus] = mapped_column(
         SAEnum(CountryStatus, name="country_status", native_enum=True),
         nullable=False,

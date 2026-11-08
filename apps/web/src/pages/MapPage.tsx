@@ -110,6 +110,71 @@ export default function MapPage() {
     whenMapReady(map, addLayers)
   }, [countries])
 
+  // keep markers on top of outlines once both exist
+  useEffect(() => {
+    const map = mapObj.current
+    if (!map) return
+    const raise = () => {
+      if (map.getLayer('country-dots') && map.getLayer('outline-fill')) {
+        map.moveLayer('country-dots')
+      }
+    }
+    map.on('sourcedata', raise)
+    return () => {
+      map.off('sourcedata', raise)
+    }
+  }, [])
+
+  useEffect(() => {
+    const map = mapObj.current
+    if (!map) return
+    let cancelled = false
+    const draw = () => {
+      fetch('/api/v1/boundaries/admin0')
+        .then((r) => r.json())
+        .then((fc) => {
+          if (cancelled) return
+          const existing = map.getSource('outlines') as maplibregl.GeoJSONSource | undefined
+          if (existing) {
+            existing.setData(fc)
+            return
+          }
+          map.addSource('outlines', { type: 'geojson', data: fc })
+          map.addLayer({
+            id: 'outline-fill',
+            type: 'fill',
+            source: 'outlines',
+            paint: {
+              'fill-color': ['case', ['==', ['get', 'status'], 'active'], '#1d4ed8', '#b7c2cf'],
+              'fill-opacity': ['case', ['==', ['get', 'status'], 'active'], 0.3, 0.45],
+            },
+          })
+          map.addLayer({
+            id: 'outline-line',
+            type: 'line',
+            source: 'outlines',
+            paint: {
+              'line-color': ['#1d4ed8', '#7d8da1'][0],
+              'line-width': 1.1,
+            },
+          })
+          map.on('click', 'outline-fill', (e: maplibregl.MapLayerMouseEvent) => {
+            const iso3 = e.features?.[0]?.properties?.iso3
+            if (!iso3 || !countries) return
+            const c = countries.find((x) => x.iso3 === iso3)
+            if (c) setSelected(c)
+          })
+          map.on('mouseenter', 'outline-fill', () => (map.getCanvas().style.cursor = 'pointer'))
+          map.on('mouseleave', 'outline-fill', () => (map.getCanvas().style.cursor = ''))
+        })
+        .catch((err) => setError(`Outline layer failed: ${String(err)}`))
+    }
+    whenMapReady(map, draw)
+    return () => {
+      cancelled = true
+    }
+  }, [countries])
+
   // boundaries for the selected onboarded country
   useEffect(() => {
     const map = mapObj.current

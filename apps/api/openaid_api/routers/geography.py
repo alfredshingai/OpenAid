@@ -382,6 +382,54 @@ def get_boundaries(
     )
 
 
+@router.get("/boundaries/admin0", tags=["hierarchy"])
+def get_admin0_boundaries(
+    simplify: float = Query(default=0.002, ge=0, le=0.05),
+    session: Session = Depends(get_db),
+) -> JSONResponse:
+    """Continent-wide country outlines (admin-0) for map rendering.
+
+    Display-only simplification (default ≈ 200 m); ``?simplify=0`` returns
+    full resolution. Stored geometry in PostGIS is never altered.
+    """
+    params: dict[str, Any] = {"simplify": simplify}
+    geometry_expr = "ST_AsGeoJSON(c.boundary, 5)"
+    if simplify > 0:
+        geometry_expr = "ST_AsGeoJSON(ST_Multi(ST_SimplifyPreserveTopology(c.boundary, :simplify)), 5)"
+    rows = session.execute(
+        text(
+            f"""
+            SELECT c.iso3, c.name, c.status, c.rep_lon, c.rep_lat, {geometry_expr} AS geometry
+            FROM countries c
+            WHERE c.boundary IS NOT NULL
+            ORDER BY c.name
+            """
+        ),
+        params,
+    ).all()
+    features = [
+        {
+            "type": "Feature",
+            "id": r.iso3,
+            "geometry": json.loads(r.geometry),
+            "properties": {
+                "iso3": r.iso3,
+                "name": r.name,
+                "status": r.status.value if hasattr(r.status, "value") else str(r.status),
+                "rep_lon": float(r.rep_lon) if r.rep_lon is not None else None,
+                "rep_lat": float(r.rep_lat) if r.rep_lat is not None else None,
+            },
+        }
+        for r in rows
+    ]
+    return JSONResponse(
+        {"type": "FeatureCollection", "features": features},
+        headers={
+            "Cache-Control": "public, max-age=0, must-revalidate, s-maxage=86400, stale-while-revalidate=604800"
+        },
+    )
+
+
 @router.get("/units/{unit_id}")
 def get_unit(unit_id: str, session: Session = Depends(get_db)) -> dict[str, Any]:
     unit = _get_unit(session, unit_id)

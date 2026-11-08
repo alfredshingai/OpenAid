@@ -24,6 +24,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 import geopandas as gpd
+import shapely
 import pandas as pd
 import pyogrio
 from geoalchemy2 import WKTElement
@@ -400,6 +401,28 @@ def _contract_feature(props: dict, geometry: dict, admin_level: int, iso3: str) 
     }
 
 
+def ingest_country_outline(session, country: Country, bundle_dir: Path) -> None:
+    """Store the admin-0 outline on the country row (continental map layer)."""
+    import pyogrio as _pyogrio
+
+    gpkg = bundle_dir / "cbk_baseline.gpkg"
+    layers = {layer for layer, _g in _pyogrio.list_layers(gpkg)}
+    outline = None
+    if "admin0" in layers:
+        gdf = gpd.read_file(gpkg, layer="admin0")
+        outline = gdf.geometry.union_all()
+    elif (bundle_dir / "data" / "admin0.geojson").exists():
+        gdf = gpd.read_file(bundle_dir / "data" / "admin0.geojson")
+        outline = gdf.geometry.union_all()
+    if outline is None or outline.is_empty:
+        print("  country outline: not present in bundle — skipped")
+        return
+    if outline.geom_type == "Polygon":
+        outline = shapely.MultiPolygon([outline])
+    country.boundary = WKTElement(outline.wkt, srid=SRID)
+    print("  country outline stored")
+
+
 def ingest_boundaries(session, country: Country, bundle_dir: Path, source: DataSource,
                       profile: CountryProfile) -> None:
     """COD-AB boundaries: admin-1 via GeoJSON, admin-2 via GeoPackage."""
@@ -694,6 +717,7 @@ def _onboard_with_profile(bundle_dir: Path, profile: CountryProfile) -> None:
         print("  country registered/activated")
         sources = register_sources_and_datasets(session, bundle_dir, profile)
         print(f"  {len(sources)} sources + catalogue entries")
+        ingest_country_outline(session, country, bundle_dir)
         ingest_boundaries(session, country, bundle_dir, sources["codab"], profile)
         seed_indicators(session, country, bundle_dir, sources, profile)
         seed_facilities(session, country, bundle_dir, sources, profile)
