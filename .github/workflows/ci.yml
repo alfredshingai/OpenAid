@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [main]
 
-jobs:
 permissions:
   contents: write
 
@@ -62,29 +61,25 @@ jobs:
           fi
           set -o pipefail
           pytest tests/backend/ -v 2>&1 | tee pytest_output.txt
-      - name: Publish test logs (ci-logs branch, readable without auth)
-        if: failure()
-        run: |
-          git config user.name "openaid-ci-logs"
-          git config user.email "ci@openaid.local"
-          git checkout --orphan ci-logs
-          git rm -rf --cached . >/dev/null 2>&1 || true
-          git add -f pytest_output.txt poc/geography-spatial/poc_pytest_output.txt 2>/dev/null || true
-          git commit -m "ci logs for ${GITHUB_SHA}"
-          git push -f origin ci-logs
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run PoC test suite (regression guard)
         working-directory: poc/geography-spatial
         run: |
           set -o pipefail
           pytest tests/ -v 2>&1 | tee poc_pytest_output.txt
-      - name: Upload PoC test output
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: poc-pytest-output
-          path: poc/geography-spatial/poc_pytest_output.txt
+      - name: Publish test logs to ci-logs branch (on failure)
+        if: failure()
+        run: |
+          git config user.name "openaid-ci-logs"
+          git config user.email "ci@openaid.local"
+          git checkout --orphan ci-logs-tmp
+          git rm -rf --cached . >/dev/null 2>&1 || true
+          git add -f pytest_output.txt 2>/dev/null || true
+          git add -f poc/geography-spatial/poc_pytest_output.txt 2>/dev/null || true
+          git commit -m "ci logs for ${GITHUB_SHA}"
+          git branch -M ci-logs
+          git push -f origin ci-logs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   frontend:
     name: Frontend (typecheck, build, tests)
