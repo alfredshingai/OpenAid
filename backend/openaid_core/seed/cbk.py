@@ -25,6 +25,7 @@ from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
+import pyogrio
 from geoalchemy2 import WKTElement
 from sqlalchemy import select
 
@@ -416,6 +417,10 @@ def ingest_boundaries(session, country: Country, bundle_dir: Path, source: DataS
     )
     print(f"  admin1 boundaries: {report.status.value} imported={report.imported} quarantined={report.quarantined}")
 
+    layers_available = {layer for layer, _geom in pyogrio.list_layers(bundle_dir / "cbk_baseline.gpkg")}
+    if "admin2" not in layers_available:
+        print("  admin2 boundaries: layer not present in this bundle — admin-1 only country")
+        return
     gdf = gpd.read_file(bundle_dir / "cbk_baseline.gpkg", layer="admin2")
     records = []
     for _, row in gdf.iterrows():
@@ -431,7 +436,8 @@ def ingest_boundaries(session, country: Country, bundle_dir: Path, source: DataS
                           ("adm0_pcode", "adm0_name", "adm1_pcode", "adm1_name", "adm2_pcode", "adm2_name")},
             }
         )
-    contract = gpd.GeoDataFrame(pd.DataFrame(records), geometry=gdf.geometry.values, crs="EPSG:4326")
+    source_crs = gdf.crs if gdf.crs is not None else "EPSG:4326"
+    contract = gpd.GeoDataFrame(pd.DataFrame(records), geometry=gdf.geometry.values, crs=source_crs)
     with tempfile.TemporaryDirectory(prefix="openaid_seed_") as tmp:
         tmp_gpkg = Path(tmp) / f"{profile.iso3.lower()}_admin2_contract.gpkg"
         contract.to_file(tmp_gpkg, layer="admin2", driver="GPKG")
@@ -469,7 +475,18 @@ def seed_indicators(session, country: Country, bundle_dir: Path, sources: dict[s
         ).scalars().all()
     }
 
-    df = pd.read_parquet(bundle_dir / "admin2.parquet")
+    # Deepest available stats table: admin-1-only countries (e.g. ESH, STP)
+    # ship admin1.parquet instead of admin2.parquet.
+    stats_path = bundle_dir / "admin2.parquet"
+    if not stats_path.exists():
+        stats_path = bundle_dir / "admin1.parquet"
+    if not stats_path.exists():
+        print("  indicator observations: no stats table in bundle — skipped")
+        return
+    df = pd.read_parquet(stats_path)
+    is_admin2 = "adm2_pcode" in df.columns
+    code_col = "adm2_pcode" if is_admin2 else "adm1_pcode"
+    parent_col = "adm1_pcode" if is_admin2 else None
     # Dedupe key includes country: country-level rows (unit_id NULL) would
     # otherwise collide across countries.
     existing = {
@@ -515,7 +532,7 @@ def seed_indicators(session, country: Country, bundle_dir: Path, sources: dict[s
     has_health = "facility_count" in df.columns and "health_facilities_count" in defs
 
     for _, row in df.iterrows():
-        unit = units.get(str(row["adm2_pcode"]))
+        unit = units.get(str(row[code_col]))
         if unit is None:
             continue
         pop = row.get("population_sum")
@@ -538,16 +555,19 @@ def seed_indicators(session, country: Country, bundle_dir: Path, sources: dict[s
                  "hdx-healthsites-2026-11", period,
                  "Count of mapped health facility points (healthsites.io); mapping coverage.")
             if health is not None and not pd.isna(health):
-                p1 = str(row["adm1_pcode"])
-                admin1_health[p1] = admin1_health.get(p1, 0.0) + float(health)
+                if parent_col:
+                    p1 = str(row[parent_col])
+                    admin1_health[p1] = admin1_health.get(p1, 0.0) + float(health)
                 country_health += float(health)
         if pop is not None and not pd.isna(pop):
-            p1 = str(row["adm1_pcode"])
-            admin1_pop[p1] = admin1_pop.get(p1, 0.0) + float(pop)
+            if parent_col:
+                p1 = str(row[parent_col])
+                admin1_pop[p1] = admin1_pop.get(p1, 0.0) + float(pop)
             country_pop += float(pop)
         if schools is not None and not pd.isna(schools):
-            p1 = str(row["adm1_pcode"])
-            admin1_schools[p1] = admin1_schools.get(p1, 0.0) + float(schools)
+            if parent_col:
+                p1 = str(row[parent_col])
+                admin1_schools[p1] = admin1_schools.get(p1, 0.0) + float(schools)
             country_schools += float(schools)
 
     # Summable indicators only — rate metrics are NOT aggregated.
@@ -597,7 +617,11 @@ def seed_facilities(session, country: Country, bundle_dir: Path, sources: dict[s
         geom_col="geometry",
     )
 
-    schools = gpd.read_file(bundle_dir / "data" / "schools.geojson")
+    schools_path = bundle_dir / "data" / "schools.geojson"
+    if not schools_path.exists():
+        print("  education facilities: no schools layer in bundle — skipped")
+        return
+    schools = gpd.read_file(schools_path)
     if schools.crs is None or schools.crs.to_epsg() != 4326:
         schools = schools.to_crs(4326)
     schools = schools.reset_index(drop=True)  # feature index = stable identity
