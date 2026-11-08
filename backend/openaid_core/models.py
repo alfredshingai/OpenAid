@@ -7,6 +7,15 @@ from .datasets.models import (  # noqa: F401
     DatasetVersion,
     DataSource,
 )
+from .governance.models import (  # noqa: F401
+    AuditLog,
+    Review,
+    Submission,
+    SubmissionStatus,
+    SubmissionType,
+    User,
+    UserRole,
+)
 from .facilities.models import (  # noqa: F401
     Facility,
     FacilityOrgRole,

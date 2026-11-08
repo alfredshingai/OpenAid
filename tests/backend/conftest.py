@@ -44,6 +44,10 @@ TABLES = [
     "dataset_versions",
     "datasets",
     "data_sources",
+    "audit_logs",
+    "reviews",
+    "submissions",
+    "users",
     "countries",
 ]
 
@@ -104,6 +108,21 @@ def client(clean_db):
     app = create_app()
     with TestClient(app) as c:
         yield c
+
+
+def register_and_login(client, username: str, password: str = "governance-pass-1") -> dict:
+    """Register (first caller becomes admin) and return {token, user}."""
+    import os as _os
+
+    r = client.post("/api/v1/auth/register", json={"username": username, "password": password})
+    if r.status_code == 409:  # already exists (within a test) -> login
+        r = client.post("/api/v1/auth/login", json={"username": username, "password": password})
+    assert r.status_code in (201, 200), r.text
+    return r.json()
+
+
+def auth_headers(token: str) -> dict:
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture

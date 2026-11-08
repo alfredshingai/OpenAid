@@ -18,6 +18,9 @@ from sqlalchemy.orm import Session
 from openaid_core.config import SRID, get_settings
 from openaid_core.db import get_db
 from openaid_core.datasets.models import DataSource
+from openaid_core.governance.models import User, UserRole
+from openaid_core.governance.service import record_audit
+from .auth import require_role
 from openaid_core.geography.ingestion import ImportMeta, ingest_geojson_bytes, ingest_gpkg_file
 from openaid_core.geography.models import (
     AdministrativeLevel,
@@ -224,7 +227,11 @@ def list_countries(
 
 
 @router.post("/countries", status_code=201)
-def create_country(payload: CountryIn, session: Session = Depends(get_db)) -> dict[str, Any]:
+def create_country(
+    payload: CountryIn,
+    session: Session = Depends(get_db),
+    user: User = Depends(require_role(UserRole.reviewer, UserRole.admin)),
+) -> dict[str, Any]:
     for existing_iso in (payload.iso2, payload.iso3):
         clash = session.execute(
             select(Country).where((Country.iso2 == existing_iso) | (Country.iso3 == existing_iso))
@@ -248,6 +255,8 @@ def create_country(payload: CountryIn, session: Session = Depends(get_db)) -> di
     session.add(CountryConfiguration(country_id=country.id, languages=payload.languages,
                                      currency=payload.currency, timezone=payload.timezone))
     session.flush()
+    record_audit(session, "country.created", actor_id=user.id, entity_type="country",
+                 entity_id=str(country.id), detail={"iso3": country.iso3, "levels": len(payload.levels)})
     return _country_out(session, country)
 
 
@@ -471,6 +480,7 @@ def _run_import(
     geojson_bytes: bytes | None, gpkg_path: Path | None, source_name: str | None,
     source_licence: str | None, source_publisher: str | None, source_url: str | None,
     source_is_synthetic: bool, reference_date: date | None, upsert: bool, layer: str | None = None,
+    user: User | None = None,
 ) -> JSONResponse:
     country = _get_country(session, country_iso3)
     source = _get_or_create_source(session, source_name, source_licence,
@@ -498,6 +508,10 @@ def _run_import(
         "filename": report.filename,
         "report": report.to_dict(),
     }
+    record_audit(session, "import.batch", actor_id=user.id if user else None,
+                 entity_type="import_batch", entity_id=payload["batch_id"],
+                 detail={"country": country.iso3, "status": payload["status"],
+                         "imported": report.imported, "quarantined": report.quarantined})
     return JSONResponse(status_code=200 if payload["status"] != "failed" else 422, content=payload)
 
 
@@ -505,6 +519,7 @@ def _run_import(
 async def import_geojson(
     file: UploadFile = File(...),
     country_iso3: str = Form(...),
+    user: User = Depends(require_role(UserRole.reviewer, UserRole.admin)),
     source_name: str | None = Form(default=None),
     source_licence: str | None = Form(default=None),
     source_publisher: str | None = Form(default=None),
@@ -526,6 +541,7 @@ async def import_geojson(
 async def import_gpkg(
     file: UploadFile = File(...),
     country_iso3: str = Form(...),
+    user: User = Depends(require_role(UserRole.reviewer, UserRole.admin)),
     layer: str | None = Form(default=None),
     source_name: str | None = Form(default=None),
     source_licence: str | None = Form(default=None),

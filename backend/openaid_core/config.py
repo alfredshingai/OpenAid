@@ -29,6 +29,10 @@ class Settings:
         self.cors_origins: list[str] = [
             o.strip() for o in os.environ.get("OPENAID_CORS_ORIGINS", "*").split(",") if o.strip()
         ]
+        # Token signing secret — MUST be overridden in any real deployment.
+        self.secret_key: str = os.environ.get("OPENAID_SECRET_KEY", "dev-secret-change-me")
+        # Simple per-IP fixed-window limit for /api/* (0 disables).
+        self.rate_limit_per_minute: int = int(os.environ.get("OPENAID_RATE_LIMIT_PER_MINUTE", "120"))
 
     @property
     def max_upload_bytes(self) -> int:

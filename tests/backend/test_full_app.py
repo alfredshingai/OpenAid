@@ -180,8 +180,33 @@ def test_openapi_documents_all_routers(client):
 
 
 def test_new_country_via_api_needs_no_code(client):
+    from tests.backend.conftest import auth_headers, register_and_login
+
+    # write endpoints are protected: anonymous -> 401, contributor -> 403
+    anon = client.post(
+        "/api/v1/countries",
+        json={"iso2": "KE", "iso3": "KEN", "name": "Kenya",
+              "levels": [{"level_number": 1, "level_name": "County"}]},
+    )
+    assert anon.status_code == 401
+
+    admin = register_and_login(client, "root_admin")  # first user -> admin
+    headers = {"Authorization": "Bearer " + admin["token"]}
+    assert client.get("/api/v1/auth/me", headers=headers).json()["role"] == "admin"
+
+    bob = register_and_login(client, "contributor_bob")  # later user -> contributor
+    bob_headers = {"Authorization": "Bearer " + bob["token"]}
+    forbidden = client.post(
+        "/api/v1/countries",
+        headers=bob_headers,
+        json={"iso2": "KE", "iso3": "KEN", "name": "Kenya",
+              "levels": [{"level_number": 1, "level_name": "County"}]},
+    )
+    assert forbidden.status_code == 403
+
     resp = client.post(
         "/api/v1/countries",
+        headers=headers,
         json={
             "iso2": "KE",
             "iso3": "KEN",
