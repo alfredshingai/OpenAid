@@ -66,21 +66,6 @@ jobs:
         run: |
           set -o pipefail
           pytest tests/ -v 2>&1 | tee poc_pytest_output.txt
-      - name: Publish test logs to ci-logs branch (on failure)
-        if: failure()
-        run: |
-          git config user.name "openaid-ci-logs"
-          git config user.email "ci@openaid.local"
-          git checkout --orphan ci-logs-tmp
-          git rm -rf --cached . >/dev/null 2>&1 || true
-          git add -f pytest_output.txt 2>/dev/null || true
-          git add -f poc/geography-spatial/poc_pytest_output.txt 2>/dev/null || true
-          git commit -m "ci logs for ${GITHUB_SHA}"
-          git branch -M ci-logs
-          git push -f origin ci-logs
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   frontend:
     name: Frontend (typecheck, build, tests)
     runs-on: ubuntu-latest
