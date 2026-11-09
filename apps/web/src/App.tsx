@@ -8,6 +8,7 @@ import CountryPage from './pages/CountryPage'
 import IndicatorsPage from './pages/IndicatorsPage'
 import DatasetsPage from './pages/DatasetsPage'
 import LoginPage from './pages/LoginPage'
+import MapProbePage from './pages/MapProbePage'
 import OrganisationsPage from './pages/OrganisationsPage'
 
 const navItem =
@@ -82,6 +83,7 @@ export default function App() {
           <Route path="/organisations" element={<OrganisationsPage />} />
           <Route path="/datasets" element={<DatasetsPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/map-probe" element={<MapProbePage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
