@@ -402,14 +402,23 @@ def _contract_feature(props: dict, geometry: dict, admin_level: int, iso3: str) 
 
 
 def ingest_country_outline(session, country: Country, bundle_dir: Path) -> None:
-    """Store the admin-0 outline on the country row (continental map layer)."""
+    """Store the admin-0 outline on the country row (continental map layer).
+
+    Non-4326 bundles are reprojected explicitly (recorded on the country
+    configuration) — never silently trusted.
+    """
     import pyogrio as _pyogrio
 
     gpkg = bundle_dir / "cbk_baseline.gpkg"
     layers = {layer for layer, _g in _pyogrio.list_layers(gpkg)}
     outline = None
+    transform_note = None
     if "admin0" in layers:
         gdf = gpd.read_file(gpkg, layer="admin0")
+        epsg = gdf.crs.to_epsg() if gdf.crs is not None else None
+        if epsg not in (4326, None):
+            transform_note = f"outline reprojected EPSG:{epsg} -> EPSG:4326"
+            gdf = gdf.to_crs(4326)
         outline = gdf.geometry.union_all()
     elif (bundle_dir / "data" / "admin0.geojson").exists():
         gdf = gpd.read_file(bundle_dir / "data" / "admin0.geojson")
@@ -420,57 +429,92 @@ def ingest_country_outline(session, country: Country, bundle_dir: Path) -> None:
     if outline.geom_type == "Polygon":
         outline = shapely.MultiPolygon([outline])
     country.boundary = WKTElement(outline.wkt, srid=SRID)
-    print("  country outline stored")
+    if transform_note:
+        print(f"  country outline: {transform_note}")
+    else:
+        print("  country outline stored")
+
+
+def _gpkg_feature(row: "pd.Series", admin_level: int, iso3: str) -> dict:
+    """Contract feature from a COD-AB GPKG row."""
+    if admin_level == 1:
+        code, name, parent = row["adm1_pcode"], row["adm1_name"], None
+    else:
+        code, name, parent = row["adm2_pcode"], row["adm2_name"], row.get("adm1_pcode")
+    return {
+        "type": "Feature",
+        "geometry": row.geometry,
+        "properties": {
+            "country_iso3": iso3,
+            "official_code": str(code),
+            "source_unit_id": str(code),
+            "name": str(name),
+            "admin_level": admin_level,
+            "parent_code": str(parent) if parent else None,
+            "codab": {k: (None if row.get(k) is None else str(row.get(k)))
+                      for k in ("adm0_pcode", "adm0_name", "adm1_pcode", "adm1_name",
+                                "adm2_pcode", "adm2_name")
+                      if k in row.index},
+        },
+    }
 
 
 def ingest_boundaries(session, country: Country, bundle_dir: Path, source: DataSource,
                       profile: CountryProfile) -> None:
-    """COD-AB boundaries: admin-1 via GeoJSON, admin-2 via GeoPackage."""
+    """COD-AB boundaries from the bundle GeoPackage, both admin levels.
+
+    The GeoPackage declares its CRS honestly (unlike the GeoJSON outputs of
+    some bundles, which carry projected coordinates under an RFC-7946
+    header). Any non-4326 layer is reprojected explicitly and the transform
+    is recorded — a bundle with an unknown CRS is failed, not guessed.
+    """
+    import pyogrio as _pyogrio
+
+    gpkg = bundle_dir / "cbk_baseline.gpkg"
+    layers = {layer for layer, _g in _pyogrio.list_layers(gpkg)}
     configured = {n: name for n, (name, _d) in profile.levels.items()}
 
-    admin1 = json.loads((bundle_dir / "data" / "admin1.geojson").read_text(encoding="utf-8"))
-    features1 = [_contract_feature(f["properties"], f["geometry"], 1, profile.iso3) for f in admin1["features"]]
-    meta = ImportMeta(
-        country_id=country.id, country_iso3=country.iso3, configured_levels=configured,
-        source=source, reference_date=source.reference_date,
-        filename="admin1.geojson (COD-AB)", format=ImportFormat.geojson,
-    )
-    _b, report = ingest_geojson_bytes(
-        session, meta, json.dumps({"type": "FeatureCollection", "features": features1}).encode()
-    )
-    print(f"  admin1 boundaries: {report.status.value} imported={report.imported} quarantined={report.quarantined}")
+    for level in (1, 2):
+        layer = f"admin{level}"
+        if layer not in layers:
+            print(f"  {layer} boundaries: layer not present in this bundle — skipped")
+            continue
+        gdf = gpd.read_file(gpkg, layer=layer)
+        epsg = gdf.crs.to_epsg() if gdf.crs is not None else None
+        transform_note = None
+        if epsg not in (4326, None):
+            transform_note = f"{layer}: reprojected EPSG:{epsg} -> EPSG:4326 (documented transform)"
+            gdf = gdf.to_crs(4326)
+        elif epsg is None:
+            meta = ImportMeta(
+                country_id=country.id, country_iso3=country.iso3, configured_levels=configured,
+                source=source, reference_date=source.reference_date,
+                filename=f"{layer} (unknown CRS)", format=ImportFormat.gpkg,
+            )
+            meta.format = ImportFormat.gpkg
+            print(f"  {layer} boundaries: FAILED — CRS not declared; refusing to guess")
+            continue
 
-    layers_available = {layer for layer, _geom in pyogrio.list_layers(bundle_dir / "cbk_baseline.gpkg")}
-    if "admin2" not in layers_available:
-        print("  admin2 boundaries: layer not present in this bundle — admin-1 only country")
-        return
-    gdf = gpd.read_file(bundle_dir / "cbk_baseline.gpkg", layer="admin2")
-    records = []
-    for _, row in gdf.iterrows():
-        records.append(
-            {
-                "country_iso3": country.iso3,
-                "official_code": str(row["adm2_pcode"]),
-                "source_unit_id": str(row["adm2_pcode"]),
-                "name": str(row["adm2_name"]),
-                "admin_level": 2,
-                "parent_code": str(row["adm1_pcode"]),
-                "codab": {k: (None if row[k] is None else str(row[k])) for k in
-                          ("adm0_pcode", "adm0_name", "adm1_pcode", "adm1_name", "adm2_pcode", "adm2_name")},
-            }
+        records = [_gpkg_feature(row, level, country.iso3) for _, row in gdf.iterrows()]
+        contract = gpd.GeoDataFrame(
+            pd.DataFrame([f["properties"] for f in records]),
+            geometry=[f["geometry"] for f in records],
+            crs="EPSG:4326",
         )
-    source_crs = gdf.crs if gdf.crs is not None else "EPSG:4326"
-    contract = gpd.GeoDataFrame(pd.DataFrame(records), geometry=gdf.geometry.values, crs=source_crs)
-    with tempfile.TemporaryDirectory(prefix="openaid_seed_") as tmp:
-        tmp_gpkg = Path(tmp) / f"{profile.iso3.lower()}_admin2_contract.gpkg"
-        contract.to_file(tmp_gpkg, layer="admin2", driver="GPKG")
-        meta2 = ImportMeta(
-            country_id=country.id, country_iso3=country.iso3, configured_levels=configured,
-            source=source, reference_date=source.reference_date,
-            filename="cbk_baseline.gpkg:admin2 (contract-converted)", format=ImportFormat.gpkg,
-        )
-        _b, report = ingest_gpkg_file(session, meta2, tmp_gpkg, layer="admin2")
-    print(f"  admin2 boundaries: {report.status.value} imported={report.imported} quarantined={report.quarantined}")
+        with tempfile.TemporaryDirectory(prefix="openaid_seed_") as tmp:
+            tmp_gpkg = Path(tmp) / f"{country.iso3.lower()}_{layer}_contract.gpkg"
+            contract.to_file(tmp_gpkg, layer=layer, driver="GPKG")
+            meta = ImportMeta(
+                country_id=country.id, country_iso3=country.iso3, configured_levels=configured,
+                source=source, reference_date=source.reference_date,
+                filename=f"cbk_baseline.gpkg:{layer} (contract-converted)",
+                format=ImportFormat.gpkg,
+            )
+            batch, report = ingest_gpkg_file(session, meta, tmp_gpkg, layer=layer)
+        status_line = f"{layer} boundaries: {report.status.value} imported={report.imported} quarantined={report.quarantined}"
+        if transform_note:
+            status_line += f" | {transform_note}"
+        print(f"  {status_line}")
 
 
 def _indicator_defs(session, profile: CountryProfile) -> dict[str, IndicatorDefinition]:
@@ -645,8 +689,15 @@ def seed_facilities(session, country: Country, bundle_dir: Path, sources: dict[s
         print("  education facilities: no schools layer in bundle — skipped")
         return
     schools = gpd.read_file(schools_path)
-    if schools.crs is None or schools.crs.to_epsg() != 4326:
+    if schools.crs is not None and schools.crs.to_epsg() not in (4326, None):
         schools = schools.to_crs(4326)
+    minx, miny, maxx, maxy = schools.total_bounds
+    if not (-180 <= minx <= 180 and -180 <= maxx <= 180 and -90 <= miny <= 90 and -90 <= maxy <= 90):
+        # Coordinates outside lon/lat with no declared CRS: the file is
+        # mislabelled — refuse rather than store garbage points.
+        print("  education facilities: FAILED — coordinates out of range and CRS "
+              "undeclared (mislabelled source); nothing stored")
+        return
     schools = schools.reset_index(drop=True)  # feature index = stable identity
 
     # A school touching more than one unit polygon yields several joined rows;

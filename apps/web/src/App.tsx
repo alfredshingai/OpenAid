@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { NavLink, Route, Routes } from 'react-router-dom'
 import { getSession, clearSession, type Session } from './auth'
 import HomePage from './pages/HomePage'
-import MapPage from './pages/MapPage'
+import { Navigate } from 'react-router-dom'
 import CountriesPage from './pages/CountriesPage'
 import CountryPage from './pages/CountryPage'
 import IndicatorsPage from './pages/IndicatorsPage'
@@ -39,7 +39,7 @@ export default function App() {
           </NavLink>
           <nav className="ml-auto flex items-center gap-1">
             <NavLink to="/" className={navItem} end>Overview</NavLink>
-            <NavLink to="/map" className={navItem}>Map</NavLink>
+            <a href="/map.html" className={navItem}>Map</a>
             <NavLink to="/countries" className={navItem}>Countries</NavLink>
             <NavLink to="/indicators" className={navItem}>Indicators</NavLink>
             <NavLink to="/organisations" className={navItem}>Organisations</NavLink>
@@ -76,7 +76,7 @@ export default function App() {
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/map" element={<MapPage />} />
+          <Route path="/map" element={<Navigate to="/map.html" replace />} />
           <Route path="/countries" element={<CountriesPage />} />
           <Route path="/countries/:iso3" element={<CountryPage />} />
           <Route path="/indicators" element={<IndicatorsPage />} />

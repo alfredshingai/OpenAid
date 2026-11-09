@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OpenAid — Africa map</title>
+<link rel="stylesheet" href="/maplibre-gl.css" />
+<script src="/maplibre-gl.js"></script>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { font-family: "Segoe UI", system-ui, sans-serif; color: #1c2430; background: #f7f8fa;
+         display: flex; flex-direction: column; }
+  header { display: flex; align-items: center; gap: 14px; padding: 0 16px; height: 56px;
+           background: #fff; border-bottom: 1px solid #e3e6ea; z-index: 5; }
+  header .brand { font-weight: 700; font-size: 15px; color: #1d4ed8; text-decoration: none; }
+  header .tag { font-size: 12.5px; color: #5b6675; }
+  header .spacer { flex: 1; }
+  header a.back { font-size: 12.5px; color: #0c5d8c; text-decoration: none; }
+  header a.back:hover { text-decoration: underline; }
+
+  main { display: grid; grid-template-columns: 300px 1fr; flex: 1; min-height: 0; }
+  aside { background: #fff; border-right: 1px solid #e3e6ea; display: flex; flex-direction: column;
+          min-height: 0; }
+  aside .search { padding: 10px; border-bottom: 1px solid #e3e6ea; }
+  aside input { width: 100%; padding: 8px 10px; border: 1px solid #c6cdd6; border-radius: 7px;
+                font-size: 13px; background: #f7f8fa; }
+  aside .legend { padding: 8px 12px; font-size: 11px; color: #5b6675; border-bottom: 1px solid #e3e6ea; }
+  aside .list { overflow-y: auto; flex: 1; }
+  aside .item { display: flex; align-items: baseline; gap: 8px; width: 100%; padding: 7px 12px;
+                border: 0; background: none; cursor: pointer; text-align: left; font-size: 13px; }
+  aside .item .iso { font-size: 11px; color: #5b6675; width: 30px; }
+  aside .item .units { margin-left: auto; font-size: 11px; color: #5b6675; }
+  aside .item:hover { background: #e8f2f8; }
+  aside .item.active { background: #1d4ed8; color: #fff; }
+  aside .item.active .iso, aside .item.active .units { color: #dbe6fb; }
+
+  #map { position: relative; }
+  #map .inner { position: absolute; inset: 0; }
+  .panel { background: #fff; border: 1px solid #e3e6ea; border-radius: 8px; padding: 12px;
+           font-size: 12.5px; line-height: 1.55; }
+  .panel h2 { margin: 0 0 2px; font-size: 15px; }
+  .panel .muted { color: #5b6675; }
+  .panel a { color: #0c5d8c; }
+  select { padding: 5px 8px; border: 1px solid #c6cdd6; border-radius: 5px; font-size: 12.5px; }
+  .warn { background: #fff6e0; border: 1px solid #e8c96a; color: #6b5410; padding: 8px 10px;
+          border-radius: 6px; font-size: 11.5px; margin-top: 8px; }
+  .badge { display: inline-block; border: 1px solid; border-radius: 4px; padding: 0 5px;
+           font-size: 10.5px; font-weight: 600; }
+  .badge.active { background: #e7f0e9; color: #15803d; border-color: #b8dcc2; }
+  .badge.placeholder { background: #eef0f3; color: #5b6675; border-color: #d5dbe2; }
+  #unitbox .unit-row { border: 1px solid #dde3ea; border-radius: 5px; padding: 6px 8px; margin-top: 6px; }
+  .hint { color: #68737f; font-size: 11px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="/">OpenAid</a>
+  <span class="tag">Open data. Stronger communities. Better decisions.</span>
+  <span class="spacer"></span>
+  <a class="back" href="/">← Back to OpenAid</a>
+</header>
+<main>
+  <aside>
+    <div class="search"><input id="search" placeholder="Search countries…" /></div>
+    <div class="legend">
+      <span style="color:#1d4ed8">■</span> data onboarded &nbsp;
+      <span style="color:#94a3b8">■</span> placeholder (no data yet)
+    </div>
+    <div class="list" id="country-list"></div>
+  </aside>
+  <section id="map">
+    <div class="inner" id="map-inner"></div>
+  </section>
+</main>
+
+<script>
+// Same vanilla-MapLibre structure as the crisis-baseline-kit map: a plain
+// script-tag page — no bundler, no framework render loop. This renders in
+// embedded viewers where the React bundle's MapLibre cannot paint.
+var map = new maplibregl.Map({
+  container: 'map-inner',
+  style: { version: 8, sources: {}, layers: [
+    { id: 'bg', type: 'background', paint: { 'background-color': '#e8eef4' } }
+  ]},
+  center: [18, 2], zoom: 2.4,
+});
+map.addControl(new maplibregl.NavigationControl());
+
+// Keep painting even in viewers that throttle requestAnimationFrame.
+setInterval(function () { if (!map.loaded()) map.triggerRepaint(); }, 500);
+
+var countries = [];
+var current = null;
+var currentLevel = null;
+var booted = false;
+
+function api(path) {
+  return fetch(path).then(function (r) {
+    if (!r.ok) throw new Error(r.status + ' ' + r.statusText);
+    return r.json();
+  });
+}
+
+function el(id) { return document.getElementById(id); }
+
+function renderList(filter) {
+  var list = el('country-list');
+  list.innerHTML = '';
+  var q = (filter || '').trim().toLowerCase();
+  countries
+    .filter(function (c) {
+      if (!q) return true;
+      return c.name.toLowerCase().indexOf(q) !== -1 || c.iso3.toLowerCase().indexOf(q) !== -1;
+    })
+    .forEach(function (c) {
+      var item = document.createElement('button');
+      item.className = 'item' + (current && current.iso3 === c.iso3 ? ' active' : '');
+      item.innerHTML = '<span class="iso">' + c.iso3 + '</span><span>' + c.name + '</span>' +
+        '<span class="units">' + (c.status === 'active' ? c.total_units + ' units' : '—') + '</span>';
+      item.onclick = function () { selectCountry(c.iso3); };
+      list.appendChild(item);
+    });
+}
+
+el('search').oninput = function (e) { renderList(e.target.value); };
+
+function showPanel(html) { el('panel').innerHTML = html; }
+
+function selectCountry(iso3) {
+  var c = countries.find(function (x) { return x.iso3 === iso3; });
+  if (!c) return;
+  current = c;
+  renderList(el('search').value);
+  api('/api/v1/countries/' + iso3).then(function (detail) {
+    current = detail;
+    var panel = el('panel');
+    if (detail.status !== 'active') {
+      panel.innerHTML =
+        '<div class="panel"><h2>' + detail.name + '</h2>' +
+        '<span class="badge placeholder">placeholder</span>' +
+        '<div class="muted" style="margin-top:8px">' + detail.iso3 + ' · ' + (detail.region || '—') + '</div>' +
+        '<div class="muted" style="margin-top:8px">No validated data onboarded yet. The architecture ' +
+        'supports this country; data follows the onboarding workflow.</div></div>';
+      clearAdminLayers();
+      return;
+    }
+    var options = detail.levels.map(function (l) {
+      return '<option value="' + l.level_number + '">L' + l.level_number + ' · ' + l.level_name +
+             ' (' + l.unit_count + ')</option>';
+    }).join('');
+    panel.innerHTML =
+      '<div class="panel">' +
+      '<h2>' + detail.name + ' <span class="badge active">active</span></h2>' +
+      '<div class="muted">' + detail.iso3 + ' · ' + (detail.region || '—') + ' · ' +
+      detail.max_level + ' levels · ' + detail.total_units + ' units</div>' +
+      '<div style="margin-top:8px"><label style="font-size:11px;color:#5b6675">Level</label><br>' +
+      '<select id="level-select">' + options + '</select></div>' +
+      '<div id="unitbox" style="margin-top:10px"><span class="muted">Click a unit on the map.</span></div>' +
+      '<div style="margin-top:10px"><a href="/countries/' + detail.iso3 + '">Open full country profile →</a></div>' +
+      '</div>';
+    el('level-select').onchange = function (e) { loadLevel(parseInt(e.target.value, 10)); };
+    loadLevel(detail.levels[detail.levels.length - 1].level_number);
+  }).catch(function (e) { showPanel('<div class="panel">API error: ' + e.message + '</div>'); });
+}
+
+function clearAdminLayers() {
+  ['admin-fill', 'admin-line'].forEach(function (id) { if (map.getLayer(id)) map.removeLayer(id); });
+  if (map.getSource('admin')) map.removeSource('admin');
+}
+
+function loadLevel(level) {
+  currentLevel = level;
+  clearAdminLayers();
+  api('/api/v1/countries/' + current.iso3 + '/boundaries?level_number=' + level).then(function (fc) {
+    var color = ['#2f6fed', '#e07b39', '#2ca02c', '#9467bd', '#17becf'][(level - 1) % 5];
+    map.addSource('admin', { type: 'geojson', data: fc });
+    map.addLayer({ id: 'admin-fill', type: 'fill', source: 'admin',
+                   paint: { 'fill-color': color, 'fill-opacity': 0.25 } });
+    map.addLayer({ id: 'admin-line', type: 'line', source: 'admin',
+                   paint: { 'line-color': color, 'line-width': 1.4 } });
+    map.on('click', 'admin-fill', function (e) {
+      var code = e.features && e.features[0] && e.features[0].properties.official_code;
+      if (code) showUnit(code);
+    });
+    var xs = [], ys = [];
+    fc.features.forEach(function (f) {
+      var g = f.geometry;
+      var polys = g.type === 'Polygon' ? [g.coordinates] : g.coordinates;
+      polys.forEach(function (poly) {
+        poly[0].forEach(function (pt) { xs.push(pt[0]); ys.push(pt[1]); });
+      });
+    });
+    if (xs.length) {
+      map.fitBounds([[Math.min.apply(null, xs), Math.min.apply(null, ys)],
+                     [Math.max.apply(null, xs), Math.max.apply(null, ys)]],
+                    { padding: 40, duration: 300 });
+    }
+  });
+}
+
+function showUnit(code) {
+  var box = el('unitbox');
+  box.innerHTML = '<span class="muted">Loading ' + code + '…</span>';
+  api('/api/v1/countries/' + current.iso3 + '/units?level_number=' + currentLevel + '&limit=2000')
+    .then(function (units) {
+      var unit = units.find(function (u) { return u.official_code === code; });
+      if (!unit) throw new Error('unit not found');
+      return api('/api/v1/units/' + unit.id + '/ancestors').then(function (anc) {
+        return api('/api/v1/countries/' + current.iso3 + '/indicators?unit_code=' + code)
+          .then(function (obs) { return { unit: unit, ancestors: anc, obs: obs }; });
+      });
+    })
+    .then(function (data) {
+      var rows = data.obs.map(function (o) {
+        var value = o.value === null
+          ? '— <span class="muted">(' + (o.missing_type || 'unknown') + ')</span>'
+          : o.value.toLocaleString('en-US');
+        return '<div class="unit-row"><b>' + o.indicator_name + '</b><br>' + value + ' ' +
+          (o.unit_label || '') + '<br><span class="hint">' + o.value_type + ' · ' + o.source +
+          ' (' + o.source_licence + ') · ' + o.period_start.slice(0, 4) + '</span></div>';
+      }).join('');
+      box.innerHTML =
+        '<div class="unit-row"><b>' + data.unit.official_code + '</b> ' + data.unit.name +
+        ' <span class="muted">(' + data.unit.level_name + ')</span><br>' +
+        '<span class="hint">↑ ' + data.ancestors.map(function (a) { return a.official_code; }).join(' ← ') + '</span></div>' +
+        rows;
+    })
+    .catch(function (e) { box.innerHTML = '<span class="muted">Failed: ' + e.message + '</span>'; });
+}
+
+// boot: data loading is NOT gated on the map's load event — the country
+// list (DOM) must populate even in viewers that never paint, and sources
+// attach as soon as the style object is operational.
+function boot() {
+  if (booted) return;
+  booted = true;
+  api('/api/v1/countries').then(function (list) {
+    countries = list;
+    renderList('');
+    return api('/api/v1/boundaries/admin0');
+  }).then(function (fc) {
+    map.addSource('outlines', { type: 'geojson', data: fc });
+    map.addLayer({ id: 'outline-fill', type: 'fill', source: 'outlines',
+      paint: { 'fill-color': ['case', ['==', ['get', 'status'], 'active'], '#1d4ed8', '#b7c2cf'],
+               'fill-opacity': ['case', ['==', ['get', 'status'], 'active'], 0.3, 0.5] } });
+    map.addLayer({ id: 'outline-line', type: 'line', source: 'outlines',
+      paint: { 'line-color': '#8fa3b8', 'line-width': 1 } });
+    map.on('click', 'outline-fill', function (e) {
+      var iso3 = e.features && e.features[0] && e.features[0].properties.iso3;
+      if (iso3) selectCountry(iso3);
+    });
+    map.on('mouseenter', 'outline-fill', function () { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'outline-fill', function () { map.getCanvas().style.cursor = ''; });
+
+    var params = new URLSearchParams(location.search);
+    var focus = params.get('country');
+    if (focus) selectCountry(focus.toUpperCase());
+  }).catch(function (e) {
+    showPanel('<div class="panel">Failed to load map data: ' + e.message + '</div>');
+  });
+}
+map.on('load', boot);
+// rAF-throttled viewers never fire 'load'; attach as soon as the style works.
+var readyCheck = setInterval(function () {
+  if (map.isStyleLoaded()) {
+    clearInterval(readyCheck);
+    boot();
+  }
+}, 300);
+el('panel').innerHTML = '<div class="panel"><span class="muted">Loading countries…</span></div>';
+</script>
+</body>
+</html>
