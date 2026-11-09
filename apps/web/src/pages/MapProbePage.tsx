@@ -60,13 +60,13 @@ export default function MapProbePage() {
       mapErrors.push(e?.error?.message ?? 'unknown map error')
     })
 
-    let rafFired: boolean | null = null
+    const rafState: { fired: boolean | null } = { fired: null }
     requestAnimationFrame(() => {
-      rafFired = true
+      rafState.fired = true
     })
     window.setTimeout(() => {
-      if (rafFired === null) {
-        rafFired = false
+      if (rafState.fired === null) {
+        rafState.fired = false
       }
     }, 2500)
 
@@ -80,7 +80,7 @@ export default function MapProbePage() {
         mapErrors.push(`getStyle: ${String(err)}`)
       }
       setDiag({
-        rafFired,
+        rafFired: rafState.fired,
         loaded: map.loaded(),
         styleLoaded: map.isStyleLoaded(),
         sources,
