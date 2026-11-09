@@ -82,7 +82,7 @@ export default function MapProbePage() {
       setDiag({
         rafFired: rafState.fired,
         loaded: map.loaded(),
-        styleLoaded: map.isStyleLoaded(),
+        styleLoaded: map.isStyleLoaded() === true,
         sources,
         layers,
         mapErrors,
