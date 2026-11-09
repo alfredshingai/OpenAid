@@ -65,7 +65,9 @@ export default function MapProbePage() {
       rafFired = true
     })
     window.setTimeout(() => {
-      if (rafFired === null) rafFired = false
+      if (rafFired === null) {
+        rafFired = false
+      }
     }, 2500)
 
     window.setTimeout(() => {
